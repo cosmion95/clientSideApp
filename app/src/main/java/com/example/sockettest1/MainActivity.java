@@ -179,26 +179,26 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     //trimit userul cu care ma conectez - userul cu id 1
-                    //new Thread(new SendMessageThread("blablabla")).start();
+                    new Thread(new SendMessageThread("1")).start();
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     int charsRead = 0;
                     char[] buffer = new char[HEADER];
-                    /*if (!authenticated) {
+                    if (!authenticated) {
                         //primul mesaj de la server e legat de autentificare
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
-                        if (serverMessage.equals(AUTH_SUCCESS)){
+                        if (serverMessage.equals(AUTH_SUCCESS)) {
                             //user autentificat cu succes
                             Log.d(TAG, "run: user autentificat cu succes");
+                            //obtin lista de utilizatori
 
-                        }
-                        else if (serverMessage.equals(AUTH_FAIL)){
+                        } else if (serverMessage.equals(AUTH_FAIL)) {
                             //user neidentificat
                             //screen de register?
                             Log.d(TAG, "run: user invalid");
                         }
-                    }*/
+                    }
                     while (true) {
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
