@@ -25,9 +25,15 @@
             android:text="SEND" />
 
         <ListView
+            android:id="@+id/users_list"
+            android:layout_width="match_parent"
+            android:layout_height="300dp" />
+
+        <ListView
             android:id="@+id/messages_list"
             android:layout_width="match_parent"
-            android:layout_height="500dp"/>
+            android:layout_height="300dp" />
+
 
     </LinearLayout>
 

@@ -47,7 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String AUTH_SUCCESS = "USER_AUTHENTICATED";
     private static final String AUTH_FAIL = "USER_NOT_AUTHENTICATED";
     private static final int MSG_SIZE = 100;
-    //ADDR = (SERVER, PORT)
+    private static final String CONTACTS_START = "CONTACTS_LIST_STARTED";
+    private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
+    private static final int CONTACT_LIST_ITEM = 10000;
 
     private Socket socket;
     private EditText textMessage;
@@ -56,7 +58,11 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Message> messagesList;
     private ListView messagestListView;
 
+    private ArrayList<User> friendsList;
+    private ListView usersListView;
+
     private MessageAdapter messageListAdapter;
+    private UserAdapter userAdapter;
 
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
@@ -69,17 +75,21 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        messagesList = new ArrayList<>();
+        messagesList = new ArrayList<Message>();
+        friendsList = new ArrayList<User>();
 
         messagestListView = findViewById(R.id.messages_list);
+        usersListView = findViewById(R.id.users_list);
 
         textMessage = findViewById(R.id.text_message);
         sendMessage = findViewById(R.id.send_button);
 
         messageListAdapter = new MessageAdapter(this,
                 R.layout.message_item, messagesList);
-
         messagestListView.setAdapter(messageListAdapter);
+
+        userAdapter = new UserAdapter(this, R.layout.user_item, friendsList);
+        usersListView.setAdapter(userAdapter);
 
         new Thread(new ConnectToServer()).start();
 
@@ -87,9 +97,9 @@ public class MainActivity extends AppCompatActivity {
         sendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               addMessageToList(textMessage.getText().toString());
-               new Thread(new SendMessageThread(textMessage.getText().toString())).start();
-               textMessage.setText("");
+                addMessageToList(textMessage.getText().toString());
+                new Thread(new SendMessageThread(textMessage.getText().toString())).start();
+                textMessage.setText("");
             }
         });
 
@@ -103,6 +113,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 messageListAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    private void addUserToList(User user) {
+        friendsList.add(user);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                userAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -142,15 +162,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     OutputStream output = socket.getOutputStream();
                     PrintWriter writer = new PrintWriter(output, true);
-                    /*int msg_length = msg.length();
-                    String send_length = String.valueOf(msg_length);
-                    for (int i = 0; i < MSG_SIZE - send_length.length(); i++) {
-                        send_length += " ";
-                    }
-
-                    Log.d(TAG, "run: send length " + send_length);
-                    writer.print(send_length + " " + msg);
-                    writer.flush();*/
 
                     writer.print(msg);
                     writer.flush();
@@ -191,9 +202,30 @@ public class MainActivity extends AppCompatActivity {
                         serverMessage = new String(buffer).substring(0, charsRead);
                         if (serverMessage.equals(AUTH_SUCCESS)) {
                             //user autentificat cu succes
-                            Log.d(TAG, "run: user autentificat cu succes");
                             //obtin lista de utilizatori
-
+                            charsRead = in.read(buffer);
+                            serverMessage = new String(buffer).substring(0, charsRead);
+                            if (serverMessage.equals(CONTACTS_START)) {
+                                boolean finished = false;
+                                char[] contactBuffer = new char[CONTACT_LIST_ITEM];
+                                while (!finished) {
+                                    charsRead = in.read(contactBuffer);
+                                    serverMessage = new String(contactBuffer).substring(0, charsRead);
+                                    if (serverMessage.contains("///")) {
+                                        String[] userConcat = serverMessage.split("&&&");
+                                        for (String x : userConcat) {
+                                            String[] user = x.split("///");
+                                            addUserToList(new User(user[0], user[1]));
+                                        }
+                                    }
+                                    if (serverMessage.equals(CONTACTS_FINISH)) {
+                                        finished = true;
+                                        for (User u : friendsList) {
+                                            Log.d(TAG, "friend " + u.getNume());
+                                        }
+                                    }
+                                }
+                            }
                         } else if (serverMessage.equals(AUTH_FAIL)) {
                             //user neidentificat
                             //screen de register?
@@ -205,7 +237,6 @@ public class MainActivity extends AppCompatActivity {
                         serverMessage = new String(buffer).substring(0, charsRead);
                         Log.d(TAG, "run: received a new message from server: " + serverMessage);
                         addMessageToList(serverMessage);
-
                     }
                 }catch (Exception e){
                     e.printStackTrace();
