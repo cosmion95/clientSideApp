@@ -29,6 +29,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -67,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
     private String serverMessage = "";
+
+    private boolean canDisconnect = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +131,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop: ON STOP");
+        new Thread(new DisconnectFromSocket()).start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy: ON DESTROY");
+        new Thread(new DisconnectFromSocket()).start();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -149,11 +166,29 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    class DisconnectFromSocket implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                OutputStream output = socket.getOutputStream();
+                PrintWriter writer = new PrintWriter(output, true);
+
+                writer.print(DISCONNECT_MESSAGE);
+                writer.flush();
+
+                socket.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     class SendMessageThread implements Runnable {
 
         String msg;
 
-        SendMessageThread(String msg){
+        SendMessageThread(String msg) {
             this.msg = msg;
         }
 
@@ -232,13 +267,15 @@ public class MainActivity extends AppCompatActivity {
                             Log.d(TAG, "run: user invalid");
                         }
                     }
-                    while (true) {
+                    while (!socket.isClosed() && socket.isConnected()) {
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
                         Log.d(TAG, "run: received a new message from server: " + serverMessage);
                         addMessageToList(serverMessage);
                     }
-                }catch (Exception e){
+                } catch (SocketException s) {
+                    Log.d(TAG, "run: socket connection has been closed");
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
