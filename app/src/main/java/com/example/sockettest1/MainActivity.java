@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String DISCONNECT_MESSAGE = "DISCONNECT";
     private static final String AUTH_SUCCESS = "USER_AUTHENTICATED";
     private static final String AUTH_FAIL = "USER_NOT_AUTHENTICATED";
+    private static final int MSG_SIZE = 100;
     //ADDR = (SERVER, PORT)
 
     private Socket socket;
@@ -141,15 +142,15 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     OutputStream output = socket.getOutputStream();
                     PrintWriter writer = new PrintWriter(output, true);
-                    int msg_length = msg.length();
+                    /*int msg_length = msg.length();
                     String send_length = String.valueOf(msg_length);
-                    for (int i = 0; i < HEADER - send_length.length(); i++) {
+                    for (int i = 0; i < MSG_SIZE - send_length.length(); i++) {
                         send_length += " ";
                     }
 
                     Log.d(TAG, "run: send length " + send_length);
-                    writer.print(send_length);
-                    writer.flush();
+                    writer.print(send_length + " " + msg);
+                    writer.flush();*/
 
                     writer.print(msg);
                     writer.flush();
@@ -183,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     int charsRead = 0;
-                    char[] buffer = new char[HEADER];
+                    char[] buffer = new char[MSG_SIZE];
                     if (!authenticated) {
                         //primul mesaj de la server e legat de autentificare
                         charsRead = in.read(buffer);
