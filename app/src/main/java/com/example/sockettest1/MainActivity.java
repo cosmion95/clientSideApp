@@ -41,9 +41,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MAIN_ACTIVITY";
     private static final int HEADER = 64;
     private static final int PORT = 5050;
-    private static final String SERVER = "192.168.1.3";
+    private static final String SERVER = "192.168.0.118";
     private static final String FORMAT = "utf-8";
     private static final String DISCONNECT_MESSAGE = "DISCONNECT";
+    private static final String AUTH_SUCCESS = "USER_AUTHENTICATED";
+    private static final String AUTH_FAIL = "USER_NOT_AUTHENTICATED";
     //ADDR = (SERVER, PORT)
 
     private Socket socket;
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Message> messagesList;
     private ListView messagestListView;
 
-    private static MessageAdapter messageListAdapter;
+    private MessageAdapter messageListAdapter;
 
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
@@ -93,10 +95,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void addMessageToList(String message){
+    private void addMessageToList(String message) {
         String date = df.format(Calendar.getInstance().getTime());
         messagesList.add(new Message(message, date, 0));
-        messageListAdapter.notifyDataSetChanged();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                messageListAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
@@ -139,6 +146,8 @@ public class MainActivity extends AppCompatActivity {
                     for (int i = 0; i < HEADER - send_length.length(); i++) {
                         send_length += " ";
                     }
+
+                    Log.d(TAG, "run: send length " + send_length);
                     writer.print(send_length);
                     writer.flush();
 
@@ -166,15 +175,35 @@ public class MainActivity extends AppCompatActivity {
 
                 socket = new Socket(serverAddr, PORT);
 
+                boolean authenticated = false;
+
                 try {
+                    //trimit userul cu care ma conectez - userul cu id 1
+                    //new Thread(new SendMessageThread("blablabla")).start();
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     int charsRead = 0;
                     char[] buffer = new char[HEADER];
-                    while (true)
-                    {
+                    /*if (!authenticated) {
+                        //primul mesaj de la server e legat de autentificare
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
+                        if (serverMessage.equals(AUTH_SUCCESS)){
+                            //user autentificat cu succes
+                            Log.d(TAG, "run: user autentificat cu succes");
+
+                        }
+                        else if (serverMessage.equals(AUTH_FAIL)){
+                            //user neidentificat
+                            //screen de register?
+                            Log.d(TAG, "run: user invalid");
+                        }
+                    }*/
+                    while (true) {
+                        charsRead = in.read(buffer);
+                        serverMessage = new String(buffer).substring(0, charsRead);
+                        Log.d(TAG, "run: received a new message from server: " + serverMessage);
+                        addMessageToList(serverMessage);
 
                     }
                 }catch (Exception e){
