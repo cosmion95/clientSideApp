@@ -1,6 +1,8 @@
 package com.example.sockettest1;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private String id;
     private String nume;
 

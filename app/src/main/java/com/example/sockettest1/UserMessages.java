@@ -32,7 +32,6 @@ import java.util.Calendar;
 public class UserMessages extends AppCompatActivity {
 
     private static final String TAG = "MAIN_ACTIVITY";
-    private static final int HEADER = 64;
     private static final int PORT = 5050;
     private static final String SERVER = "192.168.0.118";
     private static final String FORMAT = "utf-8";
@@ -46,40 +45,40 @@ public class UserMessages extends AppCompatActivity {
 
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
+    private User currentUser;
+
     public static Socket socket;
 
     private TextView userName;
     private Button backButton;
     private Button sendMessage;
 
+
     private EditText textMessage;
 
-    private String serverMessage;
-
-    private ArrayList<Message> messagesList;
     private ListView messagestListView;
-    private UserMessageAdapter messageListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_messages);
 
-        String receivedUser;
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
             if (extras == null) {
-                receivedUser = null;
+                currentUser = null;
             } else {
-                receivedUser = extras.getString("USER_NAME");
+                currentUser = (User) getIntent().getSerializableExtra("CURRENT_USER");
             }
         } else {
-            receivedUser = (String) savedInstanceState.getSerializable("STRING_I_NEED");
+            currentUser = (User) savedInstanceState.getSerializable("CURRENT_USER");
         }
 
         userName = findViewById(R.id.username_text_view);
 
-        userName.setText(receivedUser);
+        userName.setText(currentUser.getNume());
+        messagestListView = findViewById(R.id.user_messages_list);
+        messagestListView.setAdapter(getAdapter());
 
         backButton = (Button) this.findViewById(R.id.user_back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -90,14 +89,6 @@ public class UserMessages extends AppCompatActivity {
         });
 
         textMessage = findViewById(R.id.user_text_message);
-
-        messagesList = new ArrayList<Message>();
-
-        messagestListView = findViewById(R.id.user_messages_list);
-
-        messageListAdapter = new UserMessageAdapter(this,
-                R.layout.user_message_item, messagesList);
-        messagestListView.setAdapter(messageListAdapter);
 
         sendMessage = this.findViewById(R.id.user_send_button);
         sendMessage.setOnClickListener(new View.OnClickListener() {
@@ -110,13 +101,22 @@ public class UserMessages extends AppCompatActivity {
         });
     }
 
+    private UserMessageAdapter getAdapter() {
+        for (UserMessagesList u : MainActivity.friendsList) {
+            if (u.getExpeditor().getId().equals(currentUser.getId())) {
+                return u.getAdapter();
+            }
+        }
+        return null;
+    }
+
     private void addMessageToList(String message) {
         String date = df.format(Calendar.getInstance().getTime());
-        messagesList.add(new Message(message, date, 0));
+        //messagesList.add(new Message(message, date, 0));
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                messageListAdapter.notifyDataSetChanged();
+                //messageListAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -145,34 +145,5 @@ public class UserMessages extends AppCompatActivity {
         }
     }
 
-    class ConnectToServer implements Runnable {
-        @Override
-        public void run() {
-            try {
-                InetAddress serverAddr = InetAddress.getByName(SERVER);
-                socket = new Socket(serverAddr, PORT);
-                try {
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    int charsRead = 0;
-                    char[] buffer = new char[MSG_SIZE];
-                    while (!socket.isClosed() && socket.isConnected()) {
-                        charsRead = in.read(buffer);
-                        serverMessage = new String(buffer).substring(0, charsRead);
-                        Log.d(TAG, "run: received a new message from server: " + serverMessage);
-                        addMessageToList(serverMessage);
-                    }
-                } catch (SocketException s) {
-                    Log.d(TAG, "run: socket connection has been closed");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (UnknownHostException e1) {
-                e1.printStackTrace();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-        }
 
-    }
 }

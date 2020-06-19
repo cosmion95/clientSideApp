@@ -1,5 +1,6 @@
 package com.example.sockettest1;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -44,7 +45,6 @@ import static android.provider.AlarmClock.EXTRA_MESSAGE;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MAIN_ACTIVITY";
-    private static final int HEADER = 64;
     private static final int PORT = 5050;
     private static final String SERVER = "192.168.0.118";
     private static final String FORMAT = "utf-8";
@@ -56,19 +56,19 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
     private static final int CONTACT_LIST_ITEM = 10000;
 
-    private static Socket socket;
+    public static Socket socket;
     private EditText textMessage;
     private Button sendMessage;
 
-    private ArrayList<Message> messagesList;
-    private ListView messagestListView;
+    //public static ArrayList<Message> messagesList;
+    //private ListView messagestListView;
 
-    private ArrayList<UserMessagesList> friendsList;
+    public static ArrayList<UserMessagesList> friendsList;
 
     private ListView usersListView;
 
-    private MessageAdapter messageListAdapter;
-    private UserAdapter userAdapter;
+    //public static MessageAdapter messageListAdapter;
+    public static UserAdapter userAdapter;
 
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
@@ -83,42 +83,42 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        messagesList = new ArrayList<Message>();
+        //messagesList = new ArrayList<Message>();
         friendsList = new ArrayList<UserMessagesList>();
 
-        messagestListView = findViewById(R.id.messages_list);
+        //messagestListView = findViewById(R.id.messages_list);
         usersListView = findViewById(R.id.users_list);
 
         textMessage = findViewById(R.id.text_message);
         sendMessage = findViewById(R.id.send_button);
 
-        messageListAdapter = new MessageAdapter(this,
-                R.layout.message_item, messagesList);
-        messagestListView.setAdapter(messageListAdapter);
+        //messageListAdapter = new MessageAdapter(this,
+        //       R.layout.message_item, messagesList);
+        //messagestListView.setAdapter(messageListAdapter);
 
         userAdapter = new UserAdapter(this, R.layout.user_item, friendsList);
         usersListView.setAdapter(userAdapter);
 
-        new Thread(new ConnectToServer()).start();
+        new Thread(new ConnectToServer(this)).start();
 
 
-        sendMessage.setOnClickListener(new View.OnClickListener() {
+      /*  sendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                addMessageToList(textMessage.getText().toString());
+                addMessageToList(textMessage.getText().toString(), this);
                 new Thread(new SendMessageThread(textMessage.getText().toString())).start();
                 textMessage.setText("");
             }
-        });
+        });*/
 
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                User user = (User) parent.getAdapter().getItem(position);
+                UserMessagesList user = (UserMessagesList) parent.getAdapter().getItem(position);
 
                 Intent intent = new Intent(MainActivity.this, UserMessages.class);
-                String message = user.getNume();
-                intent.putExtra("USER_NAME", message);
+                User currentUser = user.getExpeditor();
+                intent.putExtra("CURRENT_USER", currentUser);
                 startActivity(intent);
             }
         });
@@ -126,19 +126,53 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void addMessageToList(String message) {
+    private void addMessageToList(String message, Context context) {
         String date = df.format(Calendar.getInstance().getTime());
-        messagesList.add(new Message(message, date, 0));
+        //messagesList.add(new Message(message, date, 0));
+        //obtin expeditorul si mesajul
+        boolean found = false;
+        String[] msgUser = message.split("~~~");
+        User user = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+        Message msg = new Message(msgUser[0].trim(), date, 1);
+        //verific daca am alte mesaje de la acelasi expeditor
+        for (UserMessagesList u : friendsList) {
+            if (u.getExpeditor().getId().equals(user.getId())) {
+                //mai am mesaje de la aceasta persoana
+                u.getMessagesList().add(msg);
+                found = true;
+                updateUI(u.getAdapter(), userAdapter);
+
+                Log.d(TAG, "addMessageToList: message received from already added person " + user.getNume());
+                break;
+            }
+        }
+        if (!found) {
+            Log.d(TAG, "addMessageToList: message received from unknown person: " + user.getNume());
+            UserMessagesList newUser = new UserMessagesList(context, user, msg);
+            friendsList.add(newUser);
+            updateUI(newUser.getAdapter(), userAdapter);
+        }
+
+        /*runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                userAdapter.notifyDataSetChanged();
+            }
+        });*/
+    }
+
+    private void updateUI(final UserMessageAdapter uma, final UserAdapter ua) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                messageListAdapter.notifyDataSetChanged();
+                uma.notifyDataSetChanged();
+                ua.notifyDataSetChanged();
             }
         });
     }
 
-    private void addUserToList(User user) {
-        friendsList.add(new UserMessagesList(user));
+    private void addUserToList(User user, Context context) {
+        friendsList.add(new UserMessagesList(context, user));
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -231,6 +265,12 @@ public class MainActivity extends AppCompatActivity {
 
     class ConnectToServer implements Runnable {
 
+        private Context context;
+
+        public ConnectToServer(Context context) {
+            this.context = context;
+        }
+
         @Override
         public void run() {
 
@@ -267,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
                                         String[] userConcat = serverMessage.split("&&&");
                                         for (String x : userConcat) {
                                             String[] user = x.split("///");
-                                            addUserToList(new User(user[0], user[1]));
+                                            addUserToList(new User(user[0], user[1]), context);
                                         }
                                     }
                                     if (serverMessage.equals(CONTACTS_FINISH)) {
@@ -288,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
                         Log.d(TAG, "run: received a new message from server: " + serverMessage);
-                        addMessageToList(serverMessage);
+                        addMessageToList(serverMessage, context);
                     }
                 } catch (SocketException s) {
                     Log.d(TAG, "run: socket connection has been closed");
