@@ -63,7 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Message> messagesList;
     private ListView messagestListView;
 
-    private ArrayList<User> friendsList;
+    private ArrayList<UserMessagesList> friendsList;
+
     private ListView usersListView;
 
     private MessageAdapter messageListAdapter;
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         messagesList = new ArrayList<Message>();
-        friendsList = new ArrayList<User>();
+        friendsList = new ArrayList<UserMessagesList>();
 
         messagestListView = findViewById(R.id.messages_list);
         usersListView = findViewById(R.id.users_list);
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addUserToList(User user) {
-        friendsList.add(user);
+        friendsList.add(new UserMessagesList(user));
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -271,8 +272,8 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     if (serverMessage.equals(CONTACTS_FINISH)) {
                                         finished = true;
-                                        for (User u : friendsList) {
-                                            Log.d(TAG, "friend " + u.getNume());
+                                        for (UserMessagesList u : friendsList) {
+                                            Log.d(TAG, "friend " + u.getExpeditor().getNume());
                                         }
                                     }
                                 }

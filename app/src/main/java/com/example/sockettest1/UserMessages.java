@@ -8,13 +8,22 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,6 +53,8 @@ public class UserMessages extends AppCompatActivity {
     private Button sendMessage;
 
     private EditText textMessage;
+
+    private String serverMessage;
 
     private ArrayList<Message> messagesList;
     private ListView messagestListView;
@@ -93,11 +104,10 @@ public class UserMessages extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 addMessageToList(textMessage.getText().toString());
-                //new Thread(new MainActivity.SendMessageThread(textMessage.getText().toString())).start();
+                new Thread(new SendMessageThread(textMessage.getText().toString())).start();
                 textMessage.setText("");
             }
         });
-
     }
 
     private void addMessageToList(String message) {
@@ -109,5 +119,60 @@ public class UserMessages extends AppCompatActivity {
                 messageListAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+    class SendMessageThread implements Runnable {
+        String msg;
+
+        SendMessageThread(String msg) {
+            this.msg = msg;
+        }
+
+        @Override
+        public void run() {
+            try {
+                OutputStream output = socket.getOutputStream();
+                PrintWriter writer = new PrintWriter(output, true);
+                writer.print(msg);
+                writer.flush();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class ConnectToServer implements Runnable {
+        @Override
+        public void run() {
+            try {
+                InetAddress serverAddr = InetAddress.getByName(SERVER);
+                socket = new Socket(serverAddr, PORT);
+                try {
+                    PrintWriter out = new PrintWriter(socket.getOutputStream());
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    int charsRead = 0;
+                    char[] buffer = new char[MSG_SIZE];
+                    while (!socket.isClosed() && socket.isConnected()) {
+                        charsRead = in.read(buffer);
+                        serverMessage = new String(buffer).substring(0, charsRead);
+                        Log.d(TAG, "run: received a new message from server: " + serverMessage);
+                        addMessageToList(serverMessage);
+                    }
+                } catch (SocketException s) {
+                    Log.d(TAG, "run: socket connection has been closed");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } catch (UnknownHostException e1) {
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+
     }
 }

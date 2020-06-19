@@ -12,13 +12,13 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
-public class UserAdapter extends ArrayAdapter<User> {
+public class UserAdapter extends ArrayAdapter<UserMessagesList> {
 
     private static final String TAG = "UserAdapter";
     private Context mContext;
     private int mResource;
 
-    public UserAdapter(@NonNull Context context, int resource, @NonNull ArrayList<User> objects) {
+    public UserAdapter(@NonNull Context context, int resource, @NonNull ArrayList<UserMessagesList> objects) {
         super(context, resource, objects);
         this.mContext = context;
         mResource = resource;
@@ -27,8 +27,8 @@ public class UserAdapter extends ArrayAdapter<User> {
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        String userName = getItem(position).getNume();
-        String userId = getItem(position).getId();
+        String userName = getItem(position).getExpeditor().getNume();
+        String userId = getItem(position).getExpeditor().getId();
 
         User user = new User(userName, userId);
 
