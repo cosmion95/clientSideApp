@@ -57,17 +57,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int CONTACT_LIST_ITEM = 10000;
 
     public static Socket socket;
-    private EditText textMessage;
-    private Button sendMessage;
-
-    //public static ArrayList<Message> messagesList;
-    //private ListView messagestListView;
 
     public static ArrayList<UserMessagesList> friendsList;
 
     private ListView usersListView;
 
-    //public static MessageAdapter messageListAdapter;
     public static UserAdapter userAdapter;
 
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
@@ -83,42 +77,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //messagesList = new ArrayList<Message>();
-        friendsList = new ArrayList<UserMessagesList>();
-
-        //messagestListView = findViewById(R.id.messages_list);
+        friendsList = new ArrayList<>();
         usersListView = findViewById(R.id.users_list);
-
-        textMessage = findViewById(R.id.text_message);
-        sendMessage = findViewById(R.id.send_button);
-
-        //messageListAdapter = new MessageAdapter(this,
-        //       R.layout.message_item, messagesList);
-        //messagestListView.setAdapter(messageListAdapter);
 
         userAdapter = new UserAdapter(this, R.layout.user_item, friendsList);
         usersListView.setAdapter(userAdapter);
 
         new Thread(new ConnectToServer(this)).start();
 
-
-      /*  sendMessage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addMessageToList(textMessage.getText().toString(), this);
-                new Thread(new SendMessageThread(textMessage.getText().toString())).start();
-                textMessage.setText("");
-            }
-        });*/
-
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 UserMessagesList user = (UserMessagesList) parent.getAdapter().getItem(position);
-
                 Intent intent = new Intent(MainActivity.this, UserMessages.class);
-                User currentUser = user.getExpeditor();
-                intent.putExtra("CURRENT_USER", currentUser);
+                intent.putExtra("CURRENT_USER", user.getExpeditor());
                 startActivity(intent);
             }
         });
@@ -126,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void addMessageToList(String message, Context context) {
+    private void receiveMessage(String message, Context context) {
         String date = df.format(Calendar.getInstance().getTime());
         //messagesList.add(new Message(message, date, 0));
         //obtin expeditorul si mesajul
@@ -153,12 +125,6 @@ public class MainActivity extends AppCompatActivity {
             updateUI(newUser.getAdapter(), userAdapter);
         }
 
-        /*runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                userAdapter.notifyDataSetChanged();
-            }
-        });*/
     }
 
     private void updateUI(final UserMessageAdapter uma, final UserAdapter ua) {
@@ -236,22 +202,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class SendMessageThread implements Runnable {
-
         String msg;
-
         SendMessageThread(String msg) {
             this.msg = msg;
         }
-
         @Override
         public void run(){
                 try {
                     OutputStream output = socket.getOutputStream();
                     PrintWriter writer = new PrintWriter(output, true);
-
                     writer.print(msg);
                     writer.flush();
-
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -259,28 +220,20 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
         }
     }
 
     class ConnectToServer implements Runnable {
-
         private Context context;
-
         public ConnectToServer(Context context) {
             this.context = context;
         }
-
         @Override
         public void run() {
-
             try {
                 InetAddress serverAddr = InetAddress.getByName(SERVER);
-
                 socket = new Socket(serverAddr, PORT);
-
                 boolean authenticated = false;
-
                 try {
                     //trimit userul cu care ma conectez - userul cu id 1
                     new Thread(new SendMessageThread("1")).start();
@@ -328,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
                         Log.d(TAG, "run: received a new message from server: " + serverMessage);
-                        addMessageToList(serverMessage, context);
+                        receiveMessage(serverMessage, context);
                     }
                 } catch (SocketException s) {
                     Log.d(TAG, "run: socket connection has been closed");

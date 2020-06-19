@@ -31,28 +31,16 @@ import java.util.Calendar;
 
 public class UserMessages extends AppCompatActivity {
 
-    private static final String TAG = "MAIN_ACTIVITY";
-    private static final int PORT = 5050;
-    private static final String SERVER = "192.168.0.118";
-    private static final String FORMAT = "utf-8";
-    private static final String DISCONNECT_MESSAGE = "DISCONNECT";
-    private static final String AUTH_SUCCESS = "USER_AUTHENTICATED";
-    private static final String AUTH_FAIL = "USER_NOT_AUTHENTICATED";
-    private static final int MSG_SIZE = 100;
-    private static final String CONTACTS_START = "CONTACTS_LIST_STARTED";
-    private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
-    private static final int CONTACT_LIST_ITEM = 10000;
-
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
     private User currentUser;
-
-    public static Socket socket;
 
     private TextView userName;
     private Button backButton;
     private Button sendMessage;
 
+    private UserMessageAdapter adapter;
+    private ArrayList<Message> messages;
 
     private EditText textMessage;
 
@@ -75,10 +63,12 @@ public class UserMessages extends AppCompatActivity {
         }
 
         userName = findViewById(R.id.username_text_view);
-
         userName.setText(currentUser.getNume());
+
+        setListAndAdapter();
+
         messagestListView = findViewById(R.id.user_messages_list);
-        messagestListView.setAdapter(getAdapter());
+        messagestListView.setAdapter(adapter);
 
         backButton = (Button) this.findViewById(R.id.user_back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -101,22 +91,23 @@ public class UserMessages extends AppCompatActivity {
         });
     }
 
-    private UserMessageAdapter getAdapter() {
+
+    private void setListAndAdapter() {
         for (UserMessagesList u : MainActivity.friendsList) {
             if (u.getExpeditor().getId().equals(currentUser.getId())) {
-                return u.getAdapter();
+                adapter = u.getAdapter();
+                messages = u.getMessagesList();
             }
         }
-        return null;
     }
 
     private void addMessageToList(String message) {
         String date = df.format(Calendar.getInstance().getTime());
-        //messagesList.add(new Message(message, date, 0));
+        messages.add(new Message(message, date, 0));
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //messageListAdapter.notifyDataSetChanged();
+                adapter.notifyDataSetChanged();
             }
         });
     }
@@ -125,13 +116,15 @@ public class UserMessages extends AppCompatActivity {
         String msg;
 
         SendMessageThread(String msg) {
-            this.msg = msg;
+            //formatez mesajul pe care il trimit catre server
+            String formattedMessage = msg + " ~~~ " + currentUser.getId() + " @@@ " + currentUser.getNume();
+            this.msg = formattedMessage;
         }
 
         @Override
         public void run() {
             try {
-                OutputStream output = socket.getOutputStream();
+                OutputStream output = MainActivity.socket.getOutputStream();
                 PrintWriter writer = new PrintWriter(output, true);
                 writer.print(msg);
                 writer.flush();
