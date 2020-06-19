@@ -1,5 +1,6 @@
 package com.example.sockettest1;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -13,6 +14,7 @@ import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -37,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import static android.provider.AlarmClock.EXTRA_MESSAGE;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MAIN_ACTIVITY";
@@ -52,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
     private static final int CONTACT_LIST_ITEM = 10000;
 
-    private Socket socket;
+    private static Socket socket;
     private EditText textMessage;
     private Button sendMessage;
 
@@ -106,6 +110,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                User user = (User) parent.getAdapter().getItem(position);
+
+                Intent intent = new Intent(MainActivity.this, UserMessages.class);
+                String message = user.getNume();
+                intent.putExtra("USER_NAME", message);
+                startActivity(intent);
+            }
+        });
+
 
     }
 
@@ -134,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.d(TAG, "onStop: ON STOP");
-        new Thread(new DisconnectFromSocket()).start();
+        //new Thread(new DisconnectFromSocket()).start();
     }
 
     @Override

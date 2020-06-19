@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><!--  Single List Item Design -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/user_msg_item"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="15dip"
+        android:text="test msg blablablablalbla"></TextView>
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/user_date_item"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/user_msg_item"
+        android:textSize="10dip"
+        android:text="19.02.2025"></TextView>
+
+    <TextView
+        android:id="@+id/user_msg_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/user_msg_item"
+        android:text="ggg"
+        android:textSize="10dp"
+        android:layout_alignParentRight="true" />
+
+</RelativeLayout>
