@@ -30,10 +30,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class UserMessages extends AppCompatActivity {
+    private static final String TAG = "USER_MESSAGES_ACTIVITY";
 
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
 
-    private User currentUser;
+    public static boolean active = false;
+
+    public static User currentUser;
 
     private TextView userName;
     private Button backButton;
@@ -50,6 +53,8 @@ public class UserMessages extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_messages);
+
+        active = true;
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
@@ -113,6 +118,14 @@ public class UserMessages extends AppCompatActivity {
             }
         });
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop: on stop called !!!!!!");
+        active = false;
+    }
+
 
     class SendMessageThread implements Runnable {
         String msg;

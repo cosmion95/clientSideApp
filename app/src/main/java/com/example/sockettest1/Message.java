@@ -20,6 +20,10 @@ public class Message {
         this.type = type;
     }*/
 
+    public void setRead(String read) {
+        this.read = read;
+    }
+
     Message(User user, String msg, String date, int type, String read) {
         this.msg = msg;
         this.date = date;

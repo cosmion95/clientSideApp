@@ -45,6 +45,20 @@ public class DBAdapter {
         return id;
     }
 
+    public void setReadNewMessages(User user) {
+        SQLiteDatabase dbb = myhelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("READ", "D");
+        dbb.update(myDbHelper.RECEIVED_TABLE_NAME, cv, "user_id = ?", new String[]{user.getId()});
+    }
+
+    public void setReadSentMessages(User user) {
+        SQLiteDatabase dbb = myhelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("READ", "D");
+        dbb.update(myDbHelper.SENT_TABLE_NAME, cv, "user_id = ?", new String[]{user.getId()});
+    }
+
     public ArrayList<Message> getMessages(String userID) {
         SQLiteDatabase db = myhelper.getWritableDatabase();
         Cursor c = db.rawQuery("select x.* from (\n" +

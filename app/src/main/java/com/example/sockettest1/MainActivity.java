@@ -55,10 +55,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONTACTS_START = "CONTACTS_LIST_STARTED";
     private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
     private static final int CONTACT_LIST_ITEM = 10000;
+    public static final String SEEN_CODE = "50kX4OBkxdnYwMTAa3md8OODKGnKSm5D7vrb";
 
     public static DBAdapter dbAdapter;
 
     public static Socket socket;
+
+    private static User connectedUser;
 
     public static ArrayList<UserMessagesList> friendsList;
 
@@ -91,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 UserMessagesList user = (UserMessagesList) parent.getAdapter().getItem(position);
+                //dau seen
+                setSeenMessages(user.getExpeditor());
                 Intent intent = new Intent(MainActivity.this, UserMessages.class);
                 intent.putExtra("CURRENT_USER", user.getExpeditor());
                 startActivity(intent);
@@ -112,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
                 u.getMessagesList().add(msg);
                 found = true;
                 dbAdapter.insertReceived(msg);
+                //dau seen daca am deschisa activitatea user_messages cu user
+                if (UserMessages.active && UserMessages.currentUser.getId().equals(user.getId())) {
+                    setSeenMessages(u.getExpeditor());
+                }
                 updateUI(u.getAdapter(), userAdapter);
                 Log.d(TAG, "addMessageToList: message received from already added person " + user.getNume());
                 break;
@@ -189,6 +198,19 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void setSeenMessages(User u) {
+        //face seen la mesaje si updateaza interfata
+        new Thread(new SendSeenSignal(SEEN_CODE, u)).start();
+        dbAdapter.setReadNewMessages(u);
+        for (UserMessagesList userMessagesList : friendsList) {
+            if (u.getId().equals(userMessagesList.getExpeditor().getId())) {
+                for (Message m : userMessagesList.getMessagesList()) {
+                    m.setRead("D");
+                }
+            }
+        }
+    }
+
     class DisconnectFromSocket implements Runnable {
 
         @Override
@@ -207,33 +229,65 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class SendMessageThread implements Runnable {
+    class AuthenticationThread implements Runnable {
         String msg;
-        SendMessageThread(String msg) {
+
+        AuthenticationThread(String msg) {
             this.msg = msg;
         }
+
         @Override
-        public void run(){
-                try {
-                    OutputStream output = socket.getOutputStream();
-                    PrintWriter writer = new PrintWriter(output, true);
-                    writer.print(msg);
-                    writer.flush();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        public void run() {
+            try {
+                OutputStream output = socket.getOutputStream();
+                PrintWriter writer = new PrintWriter(output, true);
+                writer.print(msg);
+                writer.flush();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class SendSeenSignal implements Runnable {
+        String msg;
+        User target;
+
+        SendSeenSignal(String msg, User target) {
+            //formatez mesajul pe care il trimit catre server
+            String formattedMessage = msg + " ~~~ " + target.getId() + " @@@ " + target.getNume();
+            this.msg = formattedMessage;
+            this.target = target;
+        }
+
+        @Override
+        public void run() {
+            try {
+                OutputStream output = socket.getOutputStream();
+                PrintWriter writer = new PrintWriter(output, true);
+                writer.print(msg);
+                writer.flush();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     class ConnectToServer implements Runnable {
         private Context context;
+
         public ConnectToServer(Context context) {
             this.context = context;
         }
+
         @Override
         public void run() {
             try {
@@ -242,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
                 boolean authenticated = false;
                 try {
                     //trimit userul cu care ma conectez - userul cu id 1
-                    new Thread(new SendMessageThread("1")).start();
+                    new Thread(new AuthenticationThread("1")).start();
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     int charsRead = 0;
@@ -251,8 +305,11 @@ public class MainActivity extends AppCompatActivity {
                         //primul mesaj de la server e legat de autentificare
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
-                        if (serverMessage.equals(AUTH_SUCCESS)) {
-                            //user autentificat cu succes
+                        if (serverMessage.contains(AUTH_SUCCESS)) {
+                            //user autentificat cu succes, obtin userul din mesaj
+                            String[] msgUser = serverMessage.split("~~~");
+                            connectedUser = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+                            Log.d(TAG, "run: succesfully authenticated with user " + connectedUser.getNume());
                             //obtin lista de utilizatori
                             charsRead = in.read(buffer);
                             serverMessage = new String(buffer).substring(0, charsRead);
@@ -286,6 +343,21 @@ public class MainActivity extends AppCompatActivity {
                     while (!socket.isClosed() && socket.isConnected()) {
                         charsRead = in.read(buffer);
                         serverMessage = new String(buffer).substring(0, charsRead);
+                        if (serverMessage.contains(SEEN_CODE)) {
+                            //update mesaje, interfata si db
+                            String[] msgUser = serverMessage.split("~~~");
+                            User user = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+                            for (UserMessagesList u : friendsList) {
+                                if (u.getExpeditor().getId().equals(user.getId())) {
+                                    for (Message m : u.getMessagesList()) {
+                                        m.setRead("D");
+                                    }
+                                }
+                            }
+                            dbAdapter.setReadSentMessages(user);
+                            //nu inregistra ca mesaj nou
+                            continue;
+                        }
                         Log.d(TAG, "run: received a new message from server: " + serverMessage);
                         receiveMessage(serverMessage, context);
                     }
