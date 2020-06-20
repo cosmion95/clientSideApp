@@ -1,14 +1,20 @@
 package com.example.sockettest1;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
 
 import android.util.Log;
 import android.view.View;
@@ -83,7 +89,10 @@ public class MainActivity extends AppCompatActivity {
         userAdapter = new UserAdapter(this, R.layout.user_item, friendsList);
         usersListView.setAdapter(userAdapter);
 
-        new Thread(new ConnectToServer(this)).start();
+        //new Thread(new ConnectToServer(this)).start();
+
+        AsyncConnection runner = new AsyncConnection(this);
+        runner.execute();
 
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -176,10 +185,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        new Thread(new DisconnectFromSocket()).start();
         super.onDestroy();
         Log.d(TAG, "onDestroy: ON DESTROY");
-        new Thread(new DisconnectFromSocket()).start();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -223,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
+                Log.d(TAG, "run: sending disconnect message");
                 OutputStream output = socket.getOutputStream();
                 PrintWriter writer = new PrintWriter(output, true);
 
@@ -265,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
         User target;
 
         SendSeenSignal(String msg, User target) {
+            Log.d(TAG, "SendSeenSignal: apelez functia cu mesajul " + msg);
             //formatez mesajul pe care il trimit catre server
             String formattedMessage = msg + " ~~~ " + target.getId() + " @@@ " + target.getNume();
             this.msg = formattedMessage;
@@ -287,6 +299,132 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    private class AsyncConnection extends AsyncTask {
+        private Context context;
+
+        public AsyncConnection(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            try {
+                InetAddress serverAddr = InetAddress.getByName(SERVER);
+                socket = new Socket(serverAddr, PORT);
+                boolean authenticated = false;
+                try {
+                    //trimit userul cu care ma conectez - userul cu id 1
+                    new Thread(new AuthenticationThread("1")).start();
+                    PrintWriter out = new PrintWriter(socket.getOutputStream());
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    int charsRead = 0;
+                    char[] buffer = new char[MSG_SIZE];
+                    if (!authenticated) {
+                        //primul mesaj de la server e legat de autentificare
+                        charsRead = in.read(buffer);
+                        serverMessage = new String(buffer).substring(0, charsRead);
+                        if (serverMessage.contains(AUTH_SUCCESS)) {
+                            //user autentificat cu succes, obtin userul din mesaj
+                            String[] msgUser = serverMessage.split("~~~");
+                            connectedUser = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+                            Log.d(TAG, "run: succesfully authenticated with user " + connectedUser.getNume());
+                            //obtin lista de utilizatori
+                            charsRead = in.read(buffer);
+                            serverMessage = new String(buffer).substring(0, charsRead);
+                            if (serverMessage.equals(CONTACTS_START)) {
+                                boolean finished = false;
+                                char[] contactBuffer = new char[CONTACT_LIST_ITEM];
+                                while (!finished) {
+                                    charsRead = in.read(contactBuffer);
+                                    serverMessage = new String(contactBuffer).substring(0, charsRead);
+                                    Log.d(TAG, "doInBackground: RECEIVED MESSAGE: " + serverMessage);
+                                    if (serverMessage.contains("///")) {
+                                        String[] userConcat = serverMessage.split("&&&");
+                                        for (String x : userConcat) {
+                                            String[] user = x.split("///");
+                                            addUserToList(new User(user[0], user[1]), context);
+                                        }
+                                    }
+                                    if (serverMessage.equals(CONTACTS_FINISH)) {
+                                        finished = true;
+                                        for (UserMessagesList u : friendsList) {
+                                            Log.d(TAG, "friend " + u.getExpeditor().getNume());
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (serverMessage.equals(AUTH_FAIL)) {
+                            //user neidentificat
+                            //screen de register?
+                            Log.d(TAG, "run: user invalid");
+                        }
+                    }
+                    while (true) {
+                        charsRead = in.read(buffer);
+                        serverMessage = new String(buffer).substring(0, charsRead);
+                        if (serverMessage.contains(SEEN_CODE)) {
+                            //update mesaje, interfata si db
+                            String[] msgUser = serverMessage.split("~~~");
+                            User user = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+                            for (UserMessagesList u : friendsList) {
+                                if (u.getExpeditor().getId().equals(user.getId())) {
+                                    for (Message m : u.getMessagesList()) {
+                                        if (m.getType() == 0) {
+                                            m.setRead("D");
+                                        }
+                                    }
+                                    updateUI(u.getAdapter(), userAdapter);
+                                    dbAdapter.setReadSentMessages(user);
+                                    break;
+                                }
+                            }
+                            //nu inregistra mesajul de seen ca si mesaj nou
+                            continue;
+                        }
+                        Log.d(TAG, "run: received a new message from server: " + serverMessage);
+                        publishProgress(serverMessage);
+                        receiveMessage(serverMessage, context);
+                    }
+                } catch (SocketException s) {
+                    Log.d(TAG, "run: socket connection has been closed");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+
+            } catch (UnknownHostException e1) {
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            return null;
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        @Override
+        protected void onProgressUpdate(Object[] values) {
+
+            String[] msgUser = values[0].toString().split("~~~");
+            String user = msgUser[1].split("@@@")[1].trim();
+            String msg = msgUser[0].trim();
+
+            super.onProgressUpdate(values);
+            String CHANNEL_ID = "NOTIFICATION_CHANNEL";
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle("New message from " + user)
+                    .setContentText(msg)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, "nume canal", NotificationManager.IMPORTANCE_HIGH);
+            notificationManager.createNotificationChannel(mChannel);
+
+            notificationManager.notify(0, builder.build());
+        }
+    }
+
 
     class ConnectToServer implements Runnable {
         private Context context;
