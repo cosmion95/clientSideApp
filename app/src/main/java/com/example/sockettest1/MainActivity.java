@@ -58,20 +58,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String SEEN_CODE = "50kX4OBkxdnYwMTAa3md8OODKGnKSm5D7vrb";
 
     public static DBAdapter dbAdapter;
-
     public static Socket socket;
-
     private static User connectedUser;
-
     public static ArrayList<UserMessagesList> friendsList;
-
     private ListView usersListView;
-
     public static UserAdapter userAdapter;
-
     DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
-
     private String serverMessage = "";
+    private Button clearDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         dbAdapter = new DBAdapter(this);
+        clearDB = findViewById(R.id.clear_db_button);
 
         friendsList = new ArrayList<>();
         usersListView = findViewById(R.id.users_list);
@@ -99,6 +94,16 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, UserMessages.class);
                 intent.putExtra("CURRENT_USER", user.getExpeditor());
                 startActivity(intent);
+            }
+        });
+
+        clearDB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dbAdapter.clearDB();
+                for (UserMessagesList u : friendsList) {
+                    u.getMessagesList().clear();
+                }
             }
         });
     }
@@ -205,7 +210,9 @@ public class MainActivity extends AppCompatActivity {
         for (UserMessagesList userMessagesList : friendsList) {
             if (u.getId().equals(userMessagesList.getExpeditor().getId())) {
                 for (Message m : userMessagesList.getMessagesList()) {
-                    m.setRead("D");
+                    if (m.getType() == 1) {
+                        m.setRead("D");
+                    }
                 }
             }
         }
@@ -350,11 +357,15 @@ public class MainActivity extends AppCompatActivity {
                             for (UserMessagesList u : friendsList) {
                                 if (u.getExpeditor().getId().equals(user.getId())) {
                                     for (Message m : u.getMessagesList()) {
-                                        m.setRead("D");
+                                        if (m.getType() == 0) {
+                                            m.setRead("D");
+                                        }
                                     }
+                                    updateUI(u.getAdapter(), userAdapter);
+                                    dbAdapter.setReadSentMessages(user);
+                                    break;
                                 }
                             }
-                            dbAdapter.setReadSentMessages(user);
                             //nu inregistra ca mesaj nou
                             continue;
                         }

@@ -59,6 +59,12 @@ public class DBAdapter {
         dbb.update(myDbHelper.SENT_TABLE_NAME, cv, "user_id = ?", new String[]{user.getId()});
     }
 
+    public void clearDB() {
+        SQLiteDatabase dbb = myhelper.getWritableDatabase();
+        dbb.execSQL("delete from " + myDbHelper.RECEIVED_TABLE_NAME);
+        dbb.execSQL("delete from " + myDbHelper.SENT_TABLE_NAME);
+    }
+
     public ArrayList<Message> getMessages(String userID) {
         SQLiteDatabase db = myhelper.getWritableDatabase();
         Cursor c = db.rawQuery("select x.* from (\n" +
