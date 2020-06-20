@@ -28,4 +28,13 @@
         android:textSize="10dp"
         android:layout_alignParentRight="true" />
 
+    <TextView
+        android:id="@+id/user_msg_read"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/user_msg_type"
+        android:text="N"
+        android:textSize="10dp"
+        android:layout_alignParentRight="true" />
+
 </RelativeLayout>

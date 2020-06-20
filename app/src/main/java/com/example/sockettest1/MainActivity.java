@@ -56,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
     private static final int CONTACT_LIST_ITEM = 10000;
 
+    public static DBAdapter dbAdapter;
+
     public static Socket socket;
 
     public static ArrayList<UserMessagesList> friendsList;
@@ -68,14 +70,14 @@ public class MainActivity extends AppCompatActivity {
 
     private String serverMessage = "";
 
-    private boolean canDisconnect = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        dbAdapter = new DBAdapter(this);
 
         friendsList = new ArrayList<>();
         usersListView = findViewById(R.id.users_list);
@@ -94,26 +96,23 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-
     }
 
     private void receiveMessage(String message, Context context) {
         String date = df.format(Calendar.getInstance().getTime());
-        //messagesList.add(new Message(message, date, 0));
         //obtin expeditorul si mesajul
         boolean found = false;
         String[] msgUser = message.split("~~~");
         User user = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
-        Message msg = new Message(msgUser[0].trim(), date, 1);
+        Message msg = new Message(user, msgUser[0].trim(), date, 1, "N");
         //verific daca am alte mesaje de la acelasi expeditor
         for (UserMessagesList u : friendsList) {
             if (u.getExpeditor().getId().equals(user.getId())) {
                 //mai am mesaje de la aceasta persoana
                 u.getMessagesList().add(msg);
                 found = true;
+                dbAdapter.insertReceived(msg);
                 updateUI(u.getAdapter(), userAdapter);
-
                 Log.d(TAG, "addMessageToList: message received from already added person " + user.getNume());
                 break;
             }
@@ -122,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "addMessageToList: message received from unknown person: " + user.getNume());
             UserMessagesList newUser = new UserMessagesList(context, user, msg);
             friendsList.add(newUser);
+            dbAdapter.insertReceived(msg);
             updateUI(newUser.getAdapter(), userAdapter);
         }
 
@@ -138,7 +138,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addUserToList(User user, Context context) {
-        friendsList.add(new UserMessagesList(context, user));
+        //obtin lista de mesaje existente din db local
+        ArrayList<Message> existentMessages = dbAdapter.getMessages(user.getId());
+        Log.d(TAG, "addUserToList: mesajele existente pentru userul " + user.getNume() + " sunt: ");
+        for (Message m : existentMessages) {
+            Log.d(TAG, "msg: " + m.getMsg());
+        }
+        friendsList.add(new UserMessagesList(context, user, existentMessages));
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

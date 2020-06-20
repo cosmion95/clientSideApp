@@ -103,7 +103,9 @@ public class UserMessages extends AppCompatActivity {
 
     private void addMessageToList(String message) {
         String date = df.format(Calendar.getInstance().getTime());
-        messages.add(new Message(message, date, 0));
+        Message msg = new Message(currentUser, message, date, 0, "N");
+        messages.add(msg);
+        MainActivity.dbAdapter.insertReceived(msg);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

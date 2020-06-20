@@ -23,6 +23,12 @@ public class UserMessagesList {
         adapter = new UserMessageAdapter(context, R.layout.user_message_item, messagesList);
     }
 
+    public UserMessagesList(Context context, User user, ArrayList<Message> messagesList) {
+        expeditor = user;
+        this.messagesList = messagesList;
+        adapter = new UserMessageAdapter(context, R.layout.user_message_item, messagesList);
+    }
+
     public User getExpeditor() {
         return expeditor;
     }

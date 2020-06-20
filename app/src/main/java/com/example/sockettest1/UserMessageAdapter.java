@@ -30,6 +30,8 @@ public class UserMessageAdapter extends ArrayAdapter<Message> {
         String message = getItem(position).getMsg();
         String date = getItem(position).getDate();
         int type = getItem(position).getType();
+        User user = getItem(position).getUser();
+        String read = getItem(position).getRead();
 
         LayoutInflater inflater = LayoutInflater.from(mContext);
         convertView = inflater.inflate(mResource, parent, false);
@@ -37,10 +39,12 @@ public class UserMessageAdapter extends ArrayAdapter<Message> {
         TextView msgTextView = convertView.findViewById(R.id.user_msg_item);
         TextView dateTextView = convertView.findViewById(R.id.user_date_item);
         TextView typeTextView = convertView.findViewById(R.id.user_msg_type);
+        TextView readTextView = convertView.findViewById(R.id.user_msg_read);
 
         msgTextView.setText(message);
         dateTextView.setText(date);
         typeTextView.setText(String.valueOf(type));
+        readTextView.setText(read);
 
         return convertView;
     }
