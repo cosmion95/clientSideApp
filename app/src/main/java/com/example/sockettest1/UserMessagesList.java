@@ -1,8 +1,11 @@
 package com.example.sockettest1;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
+
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class UserMessagesList {
 
@@ -43,6 +46,25 @@ public class UserMessagesList {
 
     public void addMessage(Message message) {
         messagesList.add(message);
+    }
+
+    public Message getLastMessage() {
+        if (messagesList != null && !messagesList.isEmpty()) {
+            return messagesList.get(messagesList.size() - 1);
+        }
+        return null;
+    }
+
+    public int getUnreadMessages() {
+        int counter = 0;
+        for (Message m : messagesList) {
+            if (m.getType() == 1 && m.getRead().equals("N")) {
+                Log.d(TAG, "getUnreadMessages: gasit mesajul necitit:" + m.getMsg());
+                counter++;
+            }
+        }
+        Log.d(TAG, "getUnreadMessages: intorc un total de " + counter + " mesaje necitite");
+        return counter;
     }
 
 }

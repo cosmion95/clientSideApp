@@ -190,6 +190,16 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onDestroy: ON DESTROY");
     }
 
+    @Override
+    protected void onPostResume() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                userAdapter.notifyDataSetChanged();
+            }
+        });
+        super.onPostResume();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
