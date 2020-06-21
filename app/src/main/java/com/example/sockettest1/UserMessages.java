@@ -9,9 +9,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -32,15 +35,15 @@ import java.util.Calendar;
 public class UserMessages extends AppCompatActivity {
     private static final String TAG = "USER_MESSAGES_ACTIVITY";
 
-    DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
+    DateFormat df = new SimpleDateFormat("dd/MM/yy hh:mm aa");
 
     public static boolean active = false;
 
     public static User currentUser;
 
     private TextView userName;
-    private Button backButton;
-    private Button sendMessage;
+    private ImageButton backButton;
+    private ImageButton sendMessage;
 
     private UserMessageAdapter adapter;
     private ArrayList<Message> messages;
@@ -53,6 +56,8 @@ public class UserMessages extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_messages);
+        Toolbar toolbar = findViewById(R.id.user_toolbar);
+        setSupportActionBar(toolbar);
 
         active = true;
 
@@ -75,7 +80,7 @@ public class UserMessages extends AppCompatActivity {
         messagestListView = findViewById(R.id.user_messages_list);
         messagestListView.setAdapter(adapter);
 
-        backButton = (Button) this.findViewById(R.id.user_back_button);
+        backButton = this.findViewById(R.id.user_back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,7 +112,9 @@ public class UserMessages extends AppCompatActivity {
     }
 
     private void addMessageToList(String message) {
-        String date = df.format(Calendar.getInstance().getTime());
+        Calendar cal = Calendar.getInstance();
+        //cal.add(Calendar.DATE, -5);
+        String date = df.format(cal.getTime());
         Message msg = new Message(currentUser, message, date, 0, "N");
         messages.add(msg);
         MainActivity.dbAdapter.insertSent(msg);
@@ -124,6 +131,32 @@ public class UserMessages extends AppCompatActivity {
         super.onStop();
         Log.d(TAG, "onStop: on stop called !!!!!!");
         active = false;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.clear_db_button) {
+            MainActivity.dbAdapter.clearDB();
+            for (UserMessagesList u : MainActivity.friendsList) {
+                u.getMessagesList().clear();
+            }
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 

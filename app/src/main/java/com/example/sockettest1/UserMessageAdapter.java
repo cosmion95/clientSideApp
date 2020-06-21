@@ -1,10 +1,12 @@
-package com.example.sockettest1;
+package com.example.sockettest1;// 1 = mesaj prim
 
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -38,13 +40,32 @@ public class UserMessageAdapter extends ArrayAdapter<Message> {
 
         TextView msgTextView = convertView.findViewById(R.id.user_msg_item);
         TextView dateTextView = convertView.findViewById(R.id.user_date_item);
-        TextView typeTextView = convertView.findViewById(R.id.user_msg_type);
-        TextView readTextView = convertView.findViewById(R.id.user_msg_read);
+        ImageView readImageView = convertView.findViewById(R.id.user_msg_read);
+        RelativeLayout relativeLayout = convertView.findViewById(R.id.rl_squircle);
+
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) relativeLayout.getLayoutParams();
 
         msgTextView.setText(message);
         dateTextView.setText(date);
-        typeTextView.setText(String.valueOf(type));
-        readTextView.setText(read);
+        dateTextView.setAlpha(0.5f);
+
+        //mesaj primit
+        if (type == 1) {
+            readImageView.setVisibility(View.GONE);
+        }
+        //mesaj trimis
+        else {
+            relativeLayout.setBackgroundResource(R.drawable.squircle_sent);
+            params.addRule(RelativeLayout.ALIGN_PARENT_END);
+            relativeLayout.setLayoutParams(params);
+            if (read.equals("D")) {
+                //iconita pentru citit
+                readImageView.setBackgroundResource(R.drawable.ic_check_circle_full);
+            } else {
+                //iconita pentru necitit
+                readImageView.setBackgroundResource(R.drawable.ic_check_circle_empty);
+            }
+        }
 
         return convertView;
     }

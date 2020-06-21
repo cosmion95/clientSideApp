@@ -2,39 +2,50 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@null"
     android:padding="10dp">
 
-    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/user_msg_item"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textSize="15dip"
-        android:text="test msg blablablablalbla"></TextView>
 
-    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/user_date_item"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/user_msg_item"
-        android:textSize="10dip"
-        android:text="19.02.2025"></TextView>
-
-    <TextView
-        android:id="@+id/user_msg_type"
+    <RelativeLayout
+        android:id="@+id/rl_squircle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/user_msg_item"
-        android:text="ggg"
-        android:textSize="10dp"
-        android:layout_alignParentRight="true" />
+        android:background="@drawable/squircle"
+        android:padding="2dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingEnd="5dp"
+        android:paddingStart="0dp">
 
-    <TextView
-        android:id="@+id/user_msg_read"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/user_msg_type"
-        android:text="N"
-        android:textSize="10dp"
-        android:layout_alignParentRight="true" />
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/user_msg_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="6dp"
+            android:paddingTop="3dp"
+            android:text="test msg blablablablalbla"
+            android:textColor="#ffffff"
+            android:textSize="12dip" />
+
+        <TextView
+            android:id="@+id/user_date_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/user_msg_item"
+            android:paddingTop="8dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="0dp"
+            android:textColor="#ffffff"
+            android:textSize="8sp" />
+
+        <ImageView
+            android:id="@+id/user_msg_read"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="3dp"
+            android:layout_toRightOf="@id/user_date_item" />
+
+    </RelativeLayout>
 
 </RelativeLayout>

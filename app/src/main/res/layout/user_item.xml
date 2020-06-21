@@ -2,39 +2,67 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp">
+    android:padding="5dp"
+    android:background="#484d54">
+
+    <TextView
+        android:id="@+id/user_item_circle"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="0dp"
+        android:background="@drawable/name_circle"
+        android:gravity="center"
+        android:textColor="#ffffff"
+        android:textSize="20sp" />
 
     <TextView
         android:id="@+id/user_name"
+        android:paddingStart="10dp"
+        android:paddingEnd="0dp"
+        android:layout_toEndOf="@id/user_item_circle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
+        android:textSize="15sp"
+        android:paddingTop="5dp"
         android:textStyle="bold"
-        android:textColor="#000000"
-        android:text="Ionel" />
-
-    <TextView
-        android:id="@+id/user_id"
-        android:layout_width="10dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/user_name"
-        android:textSize="16sp"
-        android:visibility="invisible" />
+        android:textColor="#ffffff" />
 
     <TextView
         android:id="@+id/user_last_message"
+        android:layout_toEndOf="@id/user_item_circle"
+        android:paddingStart="10dp"
+        android:paddingEnd="0dp"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:layout_below="@+id/user_name"
-        android:text="Salut !!!" />
+        android:textSize="12sp"
+        android:textColor="#ffffff"
+        android:layout_below="@+id/user_name" />
+
+
+    <TextView
+        android:id="@+id/user_item_last_message_circle"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="0dp"
+        android:background="@drawable/new_message_circle"
+        android:layout_below="@id/user_last_date"
+        android:gravity="center"
+        android:layout_marginEnd="5dp"
+        android:textColor="#000000"
+        android:textSize="12sp"
+        android:layout_alignParentEnd="true"
+        android:visibility="invisible" />
 
     <TextView
         android:id="@+id/user_last_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="10.10.2010"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:paddingEnd="5dp"
+        android:paddingStart="0dp"
         android:textSize="12sp"
+        android:textColor="#ffffff"
         android:layout_alignParentEnd="true" />
 
     <TextView
@@ -43,7 +71,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="15sp"
+        android:paddingRight="5dp"
+        android:textColor="#ffffff"
         android:layout_alignParentEnd="true" />
+
+
+    <TextView
+        android:id="@+id/user_id"
+        android:layout_width="10dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/user_name"
+        android:textSize="16sp"
+        android:textColor="#ffffff"
+        android:visibility="invisible" />
 
 
 </RelativeLayout>

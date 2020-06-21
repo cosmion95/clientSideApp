@@ -1,52 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/background"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="10dp">
-
-        <Button
-            android:layout_width="40dp"
-            android:layout_height="30dp"
-            android:id="@+id/user_back_button"
-            android:text="bk"
-            android:textSize="10dp" />
-
-
-        <TextView
-            android:id="@+id/username_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="User"
-            android:textSize="20dp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_toRightOf="@id/user_back_button" />
-
+        android:layout_margin="5dp">
 
         <ListView
             android:id="@+id/user_messages_list"
             android:layout_width="match_parent"
-            android:layout_height="500dp"
-            android:layout_below="@id/username_text_view" />
+            android:layout_height="match_parent"
+            android:layout_above="@id/user_round_rect"
+            android:divider="@null"
+            android:paddingBottom="5dp" />
+
+        <TextView
+            android:id="@+id/user_round_rect"
+            android:layout_width="350dp"
+            android:layout_height="37dp"
+            android:layout_marginBottom="5dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/round_rect"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/user_round_send"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@id/user_round_rect"
+            android:background="@drawable/new_message_circle"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
 
 
         <EditText
             android:id="@+id/user_text_message"
             android:layout_width="match_parent"
+            android:paddingStart="10dp"
             android:layout_height="50dp"
-            android:hint="Your message here"
-            android:layout_below="@id/user_messages_list" />
+            android:layout_alignParentBottom="true"
+            android:background="@null"
+            android:hint="@string/type_message_hint"
+            android:textColor="#ffffff"
+            android:textColorHint="#646769" />
 
-        <Button
+        <ImageButton
             android:id="@+id/user_send_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SEND"
-            android:layout_below="@id/user_text_message" />
+            android:src="@drawable/ic_send_24px"
+            android:layout_toEndOf="@id/user_round_rect"
+            android:background="@null"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="3dp"
+            android:paddingBottom="16dp" />
+
 
     </RelativeLayout>
 

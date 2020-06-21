@@ -6,6 +6,83 @@
     android:layout_height="match_parent"
     tools:context=".UserMessages">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/user_toolbar"
+            android:backgroundTint="#4d596e"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:contentInsetLeft="0dp"
+            android:contentInsetStart="0dp"
+            app:contentInsetLeft="0dp"
+            app:contentInsetStart="0dp"
+            android:contentInsetRight="0dp"
+            android:contentInsetEnd="0dp"
+            app:contentInsetRight="0dp"
+            app:contentInsetEnd="0dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageButton
+                    android:id="@+id/user_back_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_arrow_back_24px"
+                    android:paddingStart="3dp"
+                    android:layout_centerVertical="true"
+                    android:background="@null" />
+
+                <TextView
+                    android:id="@+id/user_item_circle"
+                    android:layout_centerVertical="true"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_toEndOf="@id/user_back_button"
+                    android:layout_marginTop="0dp"
+                    android:background="@drawable/name_circle"
+                    android:gravity="center"
+                    android:text="U"
+                    android:textColor="#ffffff"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/username_text_view"
+                    android:layout_toEndOf="@id/user_item_circle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:paddingTop="10dp"
+                    android:paddingStart="5dp"
+                    android:textStyle="bold"
+                    android:text="USER"
+                    android:textColor="#ffffff" />
+
+
+                <TextView
+                    android:id="@+id/user_last_message"
+                    android:layout_toEndOf="@id/user_item_circle"
+                    android:paddingStart="5dp"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#ffffff"
+                    android:text="Last seen today at 7:52 PM"
+                    android:layout_below="@+id/username_text_view" />
+
+            </RelativeLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
 
     <include layout="@layout/content_user_messages" />
 

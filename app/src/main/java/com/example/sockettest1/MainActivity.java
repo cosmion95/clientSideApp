@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -69,9 +70,8 @@ public class MainActivity extends AppCompatActivity {
     public static ArrayList<UserMessagesList> friendsList;
     private ListView usersListView;
     public static UserAdapter userAdapter;
-    DateFormat df = new SimpleDateFormat("d MMM yyyy HH:mm:ss");
+    DateFormat df = new SimpleDateFormat("dd/MM/yy hh:mm aa");
     private String serverMessage = "";
-    private Button clearDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         dbAdapter = new DBAdapter(this);
-        clearDB = findViewById(R.id.clear_db_button);
 
         friendsList = new ArrayList<>();
         usersListView = findViewById(R.id.users_list);
@@ -106,15 +105,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        clearDB.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dbAdapter.clearDB();
-                for (UserMessagesList u : friendsList) {
-                    u.getMessagesList().clear();
-                }
-            }
-        });
     }
 
     private void receiveMessage(String message, Context context) {
@@ -216,7 +206,11 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.clear_db_button) {
+            dbAdapter.clearDB();
+            for (UserMessagesList u : friendsList) {
+                u.getMessagesList().clear();
+            }
             return true;
         }
 
