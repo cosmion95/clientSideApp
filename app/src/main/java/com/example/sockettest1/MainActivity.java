@@ -151,7 +151,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
             dbAdapter.insertReceived(msg);
             updateUI(newUser);
         }
-
     }
 
     private void updateUI(final UserMessagesList user) {
@@ -224,6 +223,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
             for (UserMessagesList u : friendsList) {
                 u.getMessagesList().clear();
             }
+            new Thread(new DisconnectFromSocket()).start();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -296,13 +296,11 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
     static class SendSeenSignal implements Runnable {
         String msg;
         User target;
-
         SendSeenSignal(String msg, User target) {
             //formatez mesajul pe care il trimit catre server
             this.msg = msg + " ~~~ " + target.getId() + " @@@ " + target.getNume();
             this.target = target;
         }
-
         @Override
         public void run() {
             try {

@@ -59,14 +59,18 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         //mesaj primit
         if (type == 1) {
-            Log.d(TAG, "onBindViewHolder: intrat in type == 1 pentru mesajul " + message);
             readImageView.setVisibility(View.GONE);
+            params.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+            params.addRule(RelativeLayout.ALIGN_PARENT_END, 0);
+            relativeLayout.setBackgroundResource(R.drawable.squircle);
+            relativeLayout.setLayoutParams(params);
         }
         //mesaj trimis
         else {
-            Log.d(TAG, "onBindViewHolder: intrat in type == 0 pentru mesajul " + message);
+            readImageView.setVisibility(View.VISIBLE);
+            params.addRule(RelativeLayout.ALIGN_PARENT_START, 0);
+            params.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
             relativeLayout.setBackgroundResource(R.drawable.squircle_sent);
-            params.addRule(RelativeLayout.ALIGN_PARENT_END);
             relativeLayout.setLayoutParams(params);
             if (read.equals("D")) {
                 //iconita pentru citit

@@ -11,6 +11,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/squircle"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="false"
         android:padding="2dp"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
@@ -48,5 +50,6 @@
             android:layout_toRightOf="@id/user_date_item" />
 
     </RelativeLayout>
+
 
 </RelativeLayout>

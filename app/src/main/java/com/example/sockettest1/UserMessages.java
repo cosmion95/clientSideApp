@@ -7,6 +7,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
@@ -87,7 +89,10 @@ public class UserMessages extends AppCompatActivity {
 
         messagestRecyclerView = findViewById(R.id.user_messages_list);
         messagestRecyclerView.setAdapter(adapter);
-        messagestRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        linearLayoutManager.setStackFromEnd(true);
+        messagestRecyclerView.setLayoutManager(linearLayoutManager);
+
 
         backButton = this.findViewById(R.id.user_back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -106,6 +111,7 @@ public class UserMessages extends AppCompatActivity {
                 addMessageToList(textMessage.getText().toString());
                 new Thread(new SendMessageThread(textMessage.getText().toString())).start();
                 textMessage.setText("");
+                messagestRecyclerView.scrollToPosition(messages.size() - 1);
             }
         });
     }
