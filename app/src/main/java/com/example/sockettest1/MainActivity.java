@@ -55,16 +55,18 @@ import static android.provider.AlarmClock.EXTRA_MESSAGE;
 public class MainActivity extends AppCompatActivity implements UserAdapter.OnItemClickListener {
 
     private static final String TAG = "MAIN_ACTIVITY";
-    private static final int PORT = 5050;
+
     private static final String SERVER = "192.168.0.118";
-    private static final String FORMAT = "utf-8";
-    private static final String DISCONNECT_MESSAGE = "DISCONNECT";
-    private static final String AUTH_SUCCESS = "USER_AUTHENTICATED";
-    private static final String AUTH_FAIL = "USER_NOT_AUTHENTICATED";
+    private static final int PORT = 5050;
+
     private static final int MSG_SIZE = 1000;
-    private static final String CONTACTS_START = "CONTACTS_LIST_STARTED";
-    private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
     private static final int CONTACT_LIST_ITEM = 10000;
+
+    private static final String DISCONNECT_MESSAGE = "Yo2HFHZOy1AgdcFNt0mgX8NYZELlsAATOrzd";
+    private static final String AUTH_SUCCESS = "kei7tLQ8PsjS4BFQsrpFKp7OhrQ8CWf9zolc";
+    private static final String AUTH_FAIL = "gXaLWkHQ5wbqLM0klsogVLE4o1TVJenhrj8Y";
+    private static final String CONTACTS_START = "2sRulLdVeOfIWNuIyW9i4pfBVWa8kCfTa6Yf";
+    private static final String CONTACTS_FINISH = "8n10TwuJPr9j4a4y1uc4z9XltbAZL1FuzlYF";
     public static final String SEEN_CODE = "50kX4OBkxdnYwMTAa3md8OODKGnKSm5D7vrb";
 
     public static DBAdapter dbAdapter;
@@ -140,12 +142,10 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                     setSeenMessages(u.getExpeditor());
                 }
                 updateUI(u);
-                Log.d(TAG, "addMessageToList: message received from already added person " + user.getNume());
                 break;
             }
         }
         if (!found) {
-            Log.d(TAG, "addMessageToList: message received from unknown person: " + user.getNume());
             UserMessagesList newUser = new UserMessagesList(context, user, msg);
             friendsList.add(newUser);
             dbAdapter.insertReceived(msg);
@@ -166,10 +166,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
     private void addUserToList(User user, Context context) {
         //obtin lista de mesaje existente din db local
         ArrayList<Message> existentMessages = dbAdapter.getMessages(user.getId());
-        Log.d(TAG, "addUserToList: mesajele existente pentru userul " + user.getNume() + " sunt: ");
-        for (Message m : existentMessages) {
-            Log.d(TAG, "msg: " + m.getMsg());
-        }
         friendsList.add(new UserMessagesList(context, user, existentMessages));
         runOnUiThread(new Runnable() {
             @Override
@@ -182,15 +178,12 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(TAG, "onStop: ON STOP");
-        //new Thread(new DisconnectFromSocket()).start();
     }
 
     @Override
     protected void onDestroy() {
         new Thread(new DisconnectFromSocket()).start();
         super.onDestroy();
-        Log.d(TAG, "onDestroy: ON DESTROY");
     }
 
     @Override
@@ -245,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
     }
 
     public void setSeenMessages(final UserMessagesList u, final ArrayList<Integer> messagesIndex) {
-        //update interfata dupa ce am primit semnalul ca mesajele au fost citite
+        //update interfata dupa ce am primit semnalul ca exista mesaje care au fost citite
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -261,7 +254,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         @Override
         public void run() {
             try {
-                Log.d(TAG, "run: sending disconnect message");
                 OutputStream output = socket.getOutputStream();
                 PrintWriter writer = new PrintWriter(output, true);
                 writer.print(DISCONNECT_MESSAGE);
@@ -275,11 +267,9 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
 
     static class AuthenticationThread implements Runnable {
         String msg;
-
         AuthenticationThread(String msg) {
             this.msg = msg;
         }
-
         @Override
         public void run() {
             try {
@@ -341,7 +331,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                             //user autentificat cu succes, obtin userul din mesaj
                             String[] msgUser = serverMessage.split("~~~");
                             User connectedUser = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
-                            Log.d(TAG, "run: succesfully authenticated with user " + connectedUser.getNume());
                             //obtin lista de utilizatori
                             charsRead = in.read(buffer);
                             serverMessage = new String(buffer).substring(0, charsRead);
@@ -351,7 +340,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                                 while (!finished) {
                                     charsRead = in.read(contactBuffer);
                                     serverMessage = new String(contactBuffer).substring(0, charsRead);
-                                    Log.d(TAG, "doInBackground: RECEIVED MESSAGE: " + serverMessage);
                                     if (serverMessage.contains("///")) {
                                         String[] userConcat = serverMessage.split("&&&");
                                         for (String x : userConcat) {
@@ -361,9 +349,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                                     }
                                     if (serverMessage.equals(CONTACTS_FINISH)) {
                                         finished = true;
-                                        for (UserMessagesList u : friendsList) {
-                                            Log.d(TAG, "friend " + u.getExpeditor().getNume());
-                                        }
                                     }
                                 }
                             }
@@ -401,7 +386,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                             //nu inregistra mesajul de seen ca si mesaj nou
                             continue;
                         }
-                        Log.d(TAG, "run: received a new message from server: " + serverMessage);
                         publishProgress(serverMessage);
                         receiveMessage(serverMessage, context);
                     }
@@ -410,8 +394,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } catch (UnknownHostException e1) {
-                e1.printStackTrace();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }

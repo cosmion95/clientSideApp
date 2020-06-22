@@ -40,21 +40,16 @@ public class UserMessages extends AppCompatActivity {
     private static final String TAG = "USER_MESSAGES_ACTIVITY";
 
     DateFormat df = new SimpleDateFormat("dd/MM/yy hh:mm aa");
-
     public static boolean active = false;
-
     public static User currentUser;
 
     private TextView userName;
     private ImageButton backButton;
     private ImageButton sendMessage;
-
     private MessageAdapter adapter;
     private ArrayList<Message> messages;
     private UserMessagesList userMessagesList;
-
     private EditText textMessage;
-
     private RecyclerView messagestRecyclerView;
 
     @Override
@@ -63,7 +58,6 @@ public class UserMessages extends AppCompatActivity {
         setContentView(R.layout.activity_user_messages);
         Toolbar toolbar = findViewById(R.id.user_toolbar);
         setSupportActionBar(toolbar);
-
         active = true;
 
         if (savedInstanceState == null) {
@@ -76,9 +70,7 @@ public class UserMessages extends AppCompatActivity {
         } else {
             currentUser = (User) savedInstanceState.getSerializable("CURRENT_USER");
         }
-
         userName = findViewById(R.id.username_text_view);
-
         String nume = currentUser.getNume();
         if (nume.length() > 25) {
             nume = nume.substring(0, 25) + "...";
@@ -92,7 +84,6 @@ public class UserMessages extends AppCompatActivity {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
         messagestRecyclerView.setLayoutManager(linearLayoutManager);
-
 
         backButton = this.findViewById(R.id.user_back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -156,7 +147,6 @@ public class UserMessages extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(TAG, "onStop: on stop called !!!!!!");
         active = false;
     }
 
@@ -173,7 +163,6 @@ public class UserMessages extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
         //noinspection SimplifiableIfStatement
         if (id == R.id.clear_db_button) {
             MainActivity.dbAdapter.clearDB();
@@ -182,24 +171,20 @@ public class UserMessages extends AppCompatActivity {
             }
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
 
     class SendMessageThread implements Runnable {
         String msg;
-
         SendMessageThread(String msg) {
             //formatez mesajul pe care il trimit catre server
             String formattedMessage = msg + " ~~~ " + currentUser.getId() + " @@@ " + currentUser.getNume();
             this.msg = formattedMessage;
         }
-
         @Override
         public void run() {
             try {
-                Log.d(TAG, "run: Trimit mesajul: " + msg);
                 OutputStream output = MainActivity.socket.getOutputStream();
                 PrintWriter writer = new PrintWriter(output, true);
                 writer.print(msg);
