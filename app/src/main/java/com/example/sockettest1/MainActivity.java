@@ -16,8 +16,11 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NotificationCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 
 import android.view.Menu;
@@ -49,7 +52,7 @@ import java.util.Date;
 
 import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements UserAdapter.OnItemClickListener {
 
     private static final String TAG = "MAIN_ACTIVITY";
     private static final int PORT = 5050;
@@ -68,8 +71,12 @@ public class MainActivity extends AppCompatActivity {
     public static Socket socket;
     private static User connectedUser;
     public static ArrayList<UserMessagesList> friendsList;
-    private ListView usersListView;
+
+    //private ListView usersListView;
+    //public static UserAdapter userAdapter;
+    private RecyclerView usersRecView;
     public static UserAdapter userAdapter;
+
     DateFormat df = new SimpleDateFormat("dd/MM/yy hh:mm aa");
     private String serverMessage = "";
 
@@ -83,29 +90,27 @@ public class MainActivity extends AppCompatActivity {
         dbAdapter = new DBAdapter(this);
 
         friendsList = new ArrayList<>();
-        usersListView = findViewById(R.id.users_list);
+        usersRecView = findViewById(R.id.users_list);
 
-        userAdapter = new UserAdapter(this, R.layout.user_item, friendsList);
-        usersListView.setAdapter(userAdapter);
-
-        //new Thread(new ConnectToServer(this)).start();
+        userAdapter = new UserAdapter(friendsList);
+        usersRecView.setAdapter(userAdapter);
+        usersRecView.setLayoutManager(new LinearLayoutManager(this));
 
         AsyncConnection runner = new AsyncConnection(this);
         runner.execute();
 
-        usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                UserMessagesList user = (UserMessagesList) parent.getAdapter().getItem(position);
-                //dau seen
-                setSeenMessages(user.getExpeditor());
-                Intent intent = new Intent(MainActivity.this, UserMessages.class);
-                intent.putExtra("CURRENT_USER", user.getExpeditor());
-                startActivity(intent);
-            }
-        });
-
+        userAdapter.setOnClick(this);
     }
+
+    @Override
+    public void onItemClick(UserMessagesList item) {
+        //dau seen
+        setSeenMessages(item.getExpeditor());
+        Intent intent = new Intent(MainActivity.this, UserMessages.class);
+        intent.putExtra("CURRENT_USER", item.getExpeditor());
+        startActivity(intent);
+    }
+
 
     private void receiveMessage(String message, Context context) {
         String date = df.format(Calendar.getInstance().getTime());
@@ -140,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void updateUI(final UserMessageAdapter uma, final UserAdapter ua) {
+    private void updateUI(final MessageAdapter uma, final UserAdapter ua) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -204,7 +209,6 @@ public class MainActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
         //noinspection SimplifiableIfStatement
         if (id == R.id.clear_db_button) {
             dbAdapter.clearDB();
@@ -213,7 +217,6 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -233,17 +236,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class DisconnectFromSocket implements Runnable {
-
         @Override
         public void run() {
             try {
                 Log.d(TAG, "run: sending disconnect message");
                 OutputStream output = socket.getOutputStream();
                 PrintWriter writer = new PrintWriter(output, true);
-
                 writer.print(DISCONNECT_MESSAGE);
                 writer.flush();
-
                 socket.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -253,11 +253,9 @@ public class MainActivity extends AppCompatActivity {
 
     class AuthenticationThread implements Runnable {
         String msg;
-
         AuthenticationThread(String msg) {
             this.msg = msg;
         }
-
         @Override
         public void run() {
             try {
@@ -278,7 +276,6 @@ public class MainActivity extends AppCompatActivity {
     class SendSeenSignal implements Runnable {
         String msg;
         User target;
-
         SendSeenSignal(String msg, User target) {
             Log.d(TAG, "SendSeenSignal: apelez functia cu mesajul " + msg);
             //formatez mesajul pe care il trimit catre server
@@ -286,7 +283,6 @@ public class MainActivity extends AppCompatActivity {
             this.msg = formattedMessage;
             this.target = target;
         }
-
         @Override
         public void run() {
             try {
@@ -306,11 +302,9 @@ public class MainActivity extends AppCompatActivity {
 
     private class AsyncConnection extends AsyncTask {
         private Context context;
-
         public AsyncConnection(Context context) {
             this.context = context;
         }
-
         @Override
         protected Object doInBackground(Object[] objects) {
             try {
@@ -319,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
                 boolean authenticated = false;
                 try {
                     //trimit userul cu care ma conectez - userul cu id 1
-                    new Thread(new AuthenticationThread("1")).start();
+                    new Thread(new AuthenticationThread("3")).start();
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     int charsRead = 0;
@@ -395,8 +389,6 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
-
             } catch (UnknownHostException e1) {
                 e1.printStackTrace();
             } catch (IOException e1) {
@@ -408,11 +400,9 @@ public class MainActivity extends AppCompatActivity {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         protected void onProgressUpdate(Object[] values) {
-
             String[] msgUser = values[0].toString().split("~~~");
             String user = msgUser[1].split("@@@")[1].trim();
             String msg = msgUser[0].trim();
-
             super.onProgressUpdate(values);
             String CHANNEL_ID = "NOTIFICATION_CHANNEL";
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
@@ -420,15 +410,12 @@ public class MainActivity extends AppCompatActivity {
                     .setContentTitle("New message from " + user)
                     .setContentText(msg)
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, "nume canal", NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(mChannel);
-
             notificationManager.notify(0, builder.build());
         }
     }
-
 
     class ConnectToServer implements Runnable {
         private Context context;

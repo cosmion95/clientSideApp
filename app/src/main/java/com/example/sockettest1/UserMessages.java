@@ -7,6 +7,8 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.Menu;
@@ -45,12 +47,12 @@ public class UserMessages extends AppCompatActivity {
     private ImageButton backButton;
     private ImageButton sendMessage;
 
-    private UserMessageAdapter adapter;
+    private MessageAdapter adapter;
     private ArrayList<Message> messages;
 
     private EditText textMessage;
 
-    private ListView messagestListView;
+    private RecyclerView messagestRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,8 +79,9 @@ public class UserMessages extends AppCompatActivity {
 
         setListAndAdapter();
 
-        messagestListView = findViewById(R.id.user_messages_list);
-        messagestListView.setAdapter(adapter);
+        messagestRecyclerView = findViewById(R.id.user_messages_list);
+        messagestRecyclerView.setAdapter(adapter);
+        messagestRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         backButton = this.findViewById(R.id.user_back_button);
         backButton.setOnClickListener(new View.OnClickListener() {

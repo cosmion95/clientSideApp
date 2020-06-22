@@ -3,46 +3,65 @@ package com.example.sockettest1;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Objects;
 
-public class UserAdapter extends ArrayAdapter<UserMessagesList> {
+public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
-    private static final String TAG = "UserAdapter";
-    private Context mContext;
-    private int mResource;
+    private ArrayList<UserMessagesList> userList;
+    private OnItemClickListener listener;
 
-    public UserAdapter(@NonNull Context context, int resource, @NonNull ArrayList<UserMessagesList> objects) {
-        super(context, resource, objects);
-        this.mContext = context;
-        mResource = resource;
+    public interface OnItemClickListener {
+        void onItemClick(UserMessagesList item);
+    }
+
+    public static class UserViewHolder extends RecyclerView.ViewHolder {
+        View v;
+
+        public UserViewHolder(View v) {
+            super(v);
+            this.v = v;
+        }
+
+        public void bind(final UserMessagesList item, final OnItemClickListener listener) {
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listener.onItemClick(item);
+                }
+            });
+        }
+    }
+
+    public UserAdapter(ArrayList<UserMessagesList> userList) {
+        this.userList = userList;
     }
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        String userName = Objects.requireNonNull(getItem(position)).getExpeditor().getNume();
-        String userId = Objects.requireNonNull(getItem(position)).getExpeditor().getId();
-        Message lMessage = Objects.requireNonNull(getItem(position)).getLastMessage();
-        int unreadMessages = Objects.requireNonNull(getItem(position)).getUnreadMessages();
+    public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.user_item, parent, false);
+        return new UserViewHolder(v);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
+        holder.bind(userList.get(position), listener);
+        String userName = userList.get(position).getExpeditor().getNume();
+        String userId = userList.get(position).getExpeditor().getId();
+        Message lMessage = userList.get(position).getLastMessage();
+        int unreadMessages = userList.get(position).getUnreadMessages();
         String lastMessage = "";
         String lastDate = "";
         if (lMessage != null) {
@@ -60,19 +79,16 @@ public class UserAdapter extends ArrayAdapter<UserMessagesList> {
             formattedDate = lastDate.split(" ")[0];
         }
 
-        LayoutInflater inflater = LayoutInflater.from(mContext);
-        convertView = inflater.inflate(mResource, parent, false);
+        TextView userInitialTextView = holder.v.findViewById(R.id.user_item_circle);
+        TextView userNameTextView = holder.v.findViewById(R.id.user_name);
+        TextView userIdTextView = holder.v.findViewById(R.id.user_id);
+        TextView lastMessageTextView = holder.v.findViewById(R.id.user_last_message);
+        TextView lastDateTextView = holder.v.findViewById(R.id.user_last_date);
+        TextView unreadMessagesTextView = holder.v.findViewById(R.id.user_item_last_message_circle);
 
-        TextView userInitialTextView = convertView.findViewById(R.id.user_item_circle);
-        TextView userNameTextView = convertView.findViewById(R.id.user_name);
-        TextView userIdTextView = convertView.findViewById(R.id.user_id);
-        TextView lastMessageTextView = convertView.findViewById(R.id.user_last_message);
-        TextView lastDateTextView = convertView.findViewById(R.id.user_last_date);
-        TextView unreadMessagesTextView = convertView.findViewById(R.id.user_item_last_message_circle);
+        GradientDrawable drawable = (GradientDrawable) holder.v.getContext().getDrawable(R.drawable.name_circle);
 
-        GradientDrawable drawable = (GradientDrawable) mContext.getDrawable(R.drawable.name_circle);
-
-        int circleColor = getMatColor("500");
+        int circleColor = getMatColor(holder.v.getContext(), "500");
         drawable.setColor(circleColor);
         drawable.setStroke(1, circleColor);
 
@@ -92,11 +108,14 @@ public class UserAdapter extends ArrayAdapter<UserMessagesList> {
         } else {
             lastDateTextView.setAlpha(0.5f);
         }
-
-        return convertView;
     }
 
-    private int getMatColor(String typeColor) {
+    @Override
+    public int getItemCount() {
+        return userList.size();
+    }
+
+    private int getMatColor(Context mContext, String typeColor) {
         int returnColor = Color.BLACK;
         int arrayId = mContext.getResources().getIdentifier("mdcolor_" + typeColor, "array", mContext.getPackageName());
 
@@ -108,4 +127,10 @@ public class UserAdapter extends ArrayAdapter<UserMessagesList> {
         }
         return returnColor;
     }
+
+    public void setOnClick(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 }
+
+

@@ -11,25 +11,25 @@ public class UserMessagesList {
 
     private User expeditor;
     private ArrayList<Message> messagesList;
-    private UserMessageAdapter adapter;
+    private MessageAdapter adapter;
 
     public UserMessagesList(Context context, User user) {
         expeditor = user;
         messagesList = new ArrayList<Message>();
-        adapter = new UserMessageAdapter(context, R.layout.user_message_item, messagesList);
+        adapter = new MessageAdapter(messagesList);
     }
 
     public UserMessagesList(Context context, User user, Message msg) {
         expeditor = user;
         messagesList = new ArrayList<Message>();
         messagesList.add(msg);
-        adapter = new UserMessageAdapter(context, R.layout.user_message_item, messagesList);
+        adapter = new MessageAdapter(messagesList);
     }
 
     public UserMessagesList(Context context, User user, ArrayList<Message> messagesList) {
         expeditor = user;
         this.messagesList = messagesList;
-        adapter = new UserMessageAdapter(context, R.layout.user_message_item, messagesList);
+        adapter = new MessageAdapter(messagesList);
     }
 
     public User getExpeditor() {
@@ -40,7 +40,7 @@ public class UserMessagesList {
         return messagesList;
     }
 
-    public UserMessageAdapter getAdapter() {
+    public MessageAdapter getAdapter() {
         return adapter;
     }
 
