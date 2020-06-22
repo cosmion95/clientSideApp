@@ -49,6 +49,7 @@ public class UserMessages extends AppCompatActivity {
 
     private MessageAdapter adapter;
     private ArrayList<Message> messages;
+    private UserMessagesList userMessagesList;
 
     private EditText textMessage;
 
@@ -75,7 +76,12 @@ public class UserMessages extends AppCompatActivity {
         }
 
         userName = findViewById(R.id.username_text_view);
-        userName.setText(currentUser.getNume());
+
+        String nume = currentUser.getNume();
+        if (nume.length() > 25) {
+            nume = nume.substring(0, 25) + "...";
+        }
+        userName.setText(nume);
 
         setListAndAdapter();
 
@@ -104,12 +110,21 @@ public class UserMessages extends AppCompatActivity {
         });
     }
 
+    public void setAdapter() {
+        adapter = new MessageAdapter(messages);
+        messagestRecyclerView.setAdapter(adapter);
+        messagestRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        userMessagesList.setAdapter(adapter);
+        adapter.notifyItemInserted(messages.size());
+    }
+
 
     private void setListAndAdapter() {
         for (UserMessagesList u : MainActivity.friendsList) {
             if (u.getExpeditor().getId().equals(currentUser.getId())) {
                 adapter = u.getAdapter();
                 messages = u.getMessagesList();
+                userMessagesList = u;
             }
         }
     }
@@ -119,12 +134,15 @@ public class UserMessages extends AppCompatActivity {
         //cal.add(Calendar.DATE, -5);
         String date = df.format(cal.getTime());
         Message msg = new Message(currentUser, message, date, 0, "N");
+        //update ordinea utilizatorilor in lista principala
+        MainActivity.friendsList.remove(userMessagesList);
         messages.add(msg);
+        MainActivity.friendsList.add(0, userMessagesList);
         MainActivity.dbAdapter.insertSent(msg);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                adapter.notifyDataSetChanged();
+                setAdapter();
             }
         });
     }
@@ -175,6 +193,7 @@ public class UserMessages extends AppCompatActivity {
         @Override
         public void run() {
             try {
+                Log.d(TAG, "run: Trimit mesajul: " + msg);
                 OutputStream output = MainActivity.socket.getOutputStream();
                 PrintWriter writer = new PrintWriter(output, true);
                 writer.print(msg);

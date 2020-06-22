@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
@@ -61,6 +64,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         String userName = userList.get(position).getExpeditor().getNume();
         String userId = userList.get(position).getExpeditor().getId();
         Message lMessage = userList.get(position).getLastMessage();
+        Log.d(TAG, "onBindViewHolder: apelez unread messages pentru: " + userName);
         int unreadMessages = userList.get(position).getUnreadMessages();
         String lastMessage = "";
         String lastDate = "";
@@ -69,6 +73,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             lastDate = lMessage.getDate();
         }
         User user = new User(userName, userId);
+
+        if (userName.length() > 25) {
+            userName = userName.substring(0, 25) + "...";
+        }
+        if (lastMessage.length() > 30) {
+            lastMessage = lastMessage.substring(0, 30) + "...";
+        }
 
         String formattedDate = "";
         DateFormat df = new SimpleDateFormat("dd/MM/yy hh:mm aa");
@@ -130,6 +141,16 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
     public void setOnClick(OnItemClickListener listener) {
         this.listener = listener;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position;
     }
 }
 

@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
     private static final String DISCONNECT_MESSAGE = "DISCONNECT";
     private static final String AUTH_SUCCESS = "USER_AUTHENTICATED";
     private static final String AUTH_FAIL = "USER_NOT_AUTHENTICATED";
-    private static final int MSG_SIZE = 100;
+    private static final int MSG_SIZE = 1000;
     private static final String CONTACTS_START = "CONTACTS_LIST_STARTED";
     private static final String CONTACTS_FINISH = "CONTACTS_LIST_FINISHED";
     private static final int CONTACT_LIST_ITEM = 10000;
@@ -69,16 +69,12 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
 
     public static DBAdapter dbAdapter;
     public static Socket socket;
-    private static User connectedUser;
     public static ArrayList<UserMessagesList> friendsList;
 
-    //private ListView usersListView;
-    //public static UserAdapter userAdapter;
-    private RecyclerView usersRecView;
+    private static RecyclerView usersRecView;
     public static UserAdapter userAdapter;
 
     DateFormat df = new SimpleDateFormat("dd/MM/yy hh:mm aa");
-    private String serverMessage = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,14 +88,24 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         friendsList = new ArrayList<>();
         usersRecView = findViewById(R.id.users_list);
 
-        userAdapter = new UserAdapter(friendsList);
-        usersRecView.setAdapter(userAdapter);
-        usersRecView.setLayoutManager(new LinearLayoutManager(this));
+        setUserAdapter();
+        userAdapter.setOnClick(this);
 
         AsyncConnection runner = new AsyncConnection(this);
         runner.execute();
 
+    }
+
+    public void setUserAdapter() {
+        userAdapter = new UserAdapter(friendsList);
+        usersRecView.setAdapter(userAdapter);
+        usersRecView.setLayoutManager(new LinearLayoutManager(this));
         userAdapter.setOnClick(this);
+        userAdapter.notifyDataSetChanged();
+    }
+
+    public void setMessageAdapter(UserMessagesList user) {
+        user.getAdapter().notifyDataSetChanged();
     }
 
     @Override
@@ -123,6 +129,9 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         for (UserMessagesList u : friendsList) {
             if (u.getExpeditor().getId().equals(user.getId())) {
                 //mai am mesaje de la aceasta persoana
+                //mut persoana la inceputul listei
+                friendsList.remove(u);
+                friendsList.add(0, u);
                 u.getMessagesList().add(msg);
                 found = true;
                 dbAdapter.insertReceived(msg);
@@ -130,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                 if (UserMessages.active && UserMessages.currentUser.getId().equals(user.getId())) {
                     setSeenMessages(u.getExpeditor());
                 }
-                updateUI(u.getAdapter(), userAdapter);
+                updateUI(u);
                 Log.d(TAG, "addMessageToList: message received from already added person " + user.getNume());
                 break;
             }
@@ -140,17 +149,17 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
             UserMessagesList newUser = new UserMessagesList(context, user, msg);
             friendsList.add(newUser);
             dbAdapter.insertReceived(msg);
-            updateUI(newUser.getAdapter(), userAdapter);
+            updateUI(newUser);
         }
 
     }
 
-    private void updateUI(final MessageAdapter uma, final UserAdapter ua) {
+    private void updateUI(final UserMessagesList user) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                uma.notifyDataSetChanged();
-                ua.notifyDataSetChanged();
+                setMessageAdapter(user);
+                setUserAdapter();
             }
         });
     }
@@ -190,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                userAdapter.notifyDataSetChanged();
+                setUserAdapter();
             }
         });
         super.onPostResume();
@@ -227,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         for (UserMessagesList userMessagesList : friendsList) {
             if (u.getId().equals(userMessagesList.getExpeditor().getId())) {
                 for (Message m : userMessagesList.getMessagesList()) {
-                    if (m.getType() == 1) {
+                    if (m.getType() == 1 && m.getRead().equals("N")) {
                         m.setRead("D");
                     }
                 }
@@ -235,7 +244,20 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         }
     }
 
-    class DisconnectFromSocket implements Runnable {
+    public void setSeenMessages(final UserMessagesList u, final ArrayList<Integer> messagesIndex) {
+        //update interfata dupa ce am primit semnalul ca mesajele au fost citite
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                for (Integer i : messagesIndex) {
+                    u.getAdapter().notifyItemChanged(i);
+                }
+                setUserAdapter();
+            }
+        });
+    }
+
+    static class DisconnectFromSocket implements Runnable {
         @Override
         public void run() {
             try {
@@ -251,11 +273,13 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         }
     }
 
-    class AuthenticationThread implements Runnable {
+    static class AuthenticationThread implements Runnable {
         String msg;
+
         AuthenticationThread(String msg) {
             this.msg = msg;
         }
+
         @Override
         public void run() {
             try {
@@ -263,26 +287,22 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                 PrintWriter writer = new PrintWriter(output, true);
                 writer.print(msg);
                 writer.flush();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    class SendSeenSignal implements Runnable {
+    static class SendSeenSignal implements Runnable {
         String msg;
         User target;
+
         SendSeenSignal(String msg, User target) {
-            Log.d(TAG, "SendSeenSignal: apelez functia cu mesajul " + msg);
             //formatez mesajul pe care il trimit catre server
-            String formattedMessage = msg + " ~~~ " + target.getId() + " @@@ " + target.getNume();
-            this.msg = formattedMessage;
+            this.msg = msg + " ~~~ " + target.getId() + " @@@ " + target.getNume();
             this.target = target;
         }
+
         @Override
         public void run() {
             try {
@@ -290,10 +310,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                 PrintWriter writer = new PrintWriter(output, true);
                 writer.print(msg);
                 writer.flush();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -307,13 +323,14 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
         }
         @Override
         protected Object doInBackground(Object[] objects) {
+            String serverMessage = "";
             try {
                 InetAddress serverAddr = InetAddress.getByName(SERVER);
                 socket = new Socket(serverAddr, PORT);
                 boolean authenticated = false;
                 try {
                     //trimit userul cu care ma conectez - userul cu id 1
-                    new Thread(new AuthenticationThread("3")).start();
+                    new Thread(new AuthenticationThread("1")).start();
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     int charsRead = 0;
@@ -325,7 +342,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                         if (serverMessage.contains(AUTH_SUCCESS)) {
                             //user autentificat cu succes, obtin userul din mesaj
                             String[] msgUser = serverMessage.split("~~~");
-                            connectedUser = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+                            User connectedUser = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
                             Log.d(TAG, "run: succesfully authenticated with user " + connectedUser.getNume());
                             //obtin lista de utilizatori
                             charsRead = in.read(buffer);
@@ -365,14 +382,20 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
                             //update mesaje, interfata si db
                             String[] msgUser = serverMessage.split("~~~");
                             User user = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
+                            UserMessagesList userMessagesList = null;
+                            ArrayList<Integer> changedReadStateIndex = new ArrayList<Integer>();
+                            int counter = 0;
                             for (UserMessagesList u : friendsList) {
                                 if (u.getExpeditor().getId().equals(user.getId())) {
+                                    userMessagesList = u;
                                     for (Message m : u.getMessagesList()) {
-                                        if (m.getType() == 0) {
+                                        if (m.getType() == 0 && m.getRead().equals("N")) {
                                             m.setRead("D");
+                                            changedReadStateIndex.add(counter);
                                         }
+                                        counter++;
                                     }
-                                    updateUI(u.getAdapter(), userAdapter);
+                                    setSeenMessages(userMessagesList, changedReadStateIndex);
                                     dbAdapter.setReadSentMessages(user);
                                     break;
                                 }
@@ -415,106 +438,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnIte
             notificationManager.createNotificationChannel(mChannel);
             notificationManager.notify(0, builder.build());
         }
-    }
-
-    class ConnectToServer implements Runnable {
-        private Context context;
-
-        public ConnectToServer(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        public void run() {
-            try {
-                InetAddress serverAddr = InetAddress.getByName(SERVER);
-                socket = new Socket(serverAddr, PORT);
-                boolean authenticated = false;
-                try {
-                    //trimit userul cu care ma conectez - userul cu id 1
-                    new Thread(new AuthenticationThread("1")).start();
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    int charsRead = 0;
-                    char[] buffer = new char[MSG_SIZE];
-                    if (!authenticated) {
-                        //primul mesaj de la server e legat de autentificare
-                        charsRead = in.read(buffer);
-                        serverMessage = new String(buffer).substring(0, charsRead);
-                        if (serverMessage.contains(AUTH_SUCCESS)) {
-                            //user autentificat cu succes, obtin userul din mesaj
-                            String[] msgUser = serverMessage.split("~~~");
-                            connectedUser = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
-                            Log.d(TAG, "run: succesfully authenticated with user " + connectedUser.getNume());
-                            //obtin lista de utilizatori
-                            charsRead = in.read(buffer);
-                            serverMessage = new String(buffer).substring(0, charsRead);
-                            if (serverMessage.equals(CONTACTS_START)) {
-                                boolean finished = false;
-                                char[] contactBuffer = new char[CONTACT_LIST_ITEM];
-                                while (!finished) {
-                                    charsRead = in.read(contactBuffer);
-                                    serverMessage = new String(contactBuffer).substring(0, charsRead);
-                                    if (serverMessage.contains("///")) {
-                                        String[] userConcat = serverMessage.split("&&&");
-                                        for (String x : userConcat) {
-                                            String[] user = x.split("///");
-                                            addUserToList(new User(user[0], user[1]), context);
-                                        }
-                                    }
-                                    if (serverMessage.equals(CONTACTS_FINISH)) {
-                                        finished = true;
-                                        for (UserMessagesList u : friendsList) {
-                                            Log.d(TAG, "friend " + u.getExpeditor().getNume());
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (serverMessage.equals(AUTH_FAIL)) {
-                            //user neidentificat
-                            //screen de register?
-                            Log.d(TAG, "run: user invalid");
-                        }
-                    }
-                    while (!socket.isClosed() && socket.isConnected()) {
-                        charsRead = in.read(buffer);
-                        serverMessage = new String(buffer).substring(0, charsRead);
-                        if (serverMessage.contains(SEEN_CODE)) {
-                            //update mesaje, interfata si db
-                            String[] msgUser = serverMessage.split("~~~");
-                            User user = new User(msgUser[1].split("@@@")[0].trim(), msgUser[1].split("@@@")[1].trim());
-                            for (UserMessagesList u : friendsList) {
-                                if (u.getExpeditor().getId().equals(user.getId())) {
-                                    for (Message m : u.getMessagesList()) {
-                                        if (m.getType() == 0) {
-                                            m.setRead("D");
-                                        }
-                                    }
-                                    updateUI(u.getAdapter(), userAdapter);
-                                    dbAdapter.setReadSentMessages(user);
-                                    break;
-                                }
-                            }
-                            //nu inregistra ca mesaj nou
-                            continue;
-                        }
-                        Log.d(TAG, "run: received a new message from server: " + serverMessage);
-                        receiveMessage(serverMessage, context);
-                    }
-                } catch (SocketException s) {
-                    Log.d(TAG, "run: socket connection has been closed");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-
-            } catch (UnknownHostException e1) {
-                e1.printStackTrace();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-        }
-
     }
 
 }

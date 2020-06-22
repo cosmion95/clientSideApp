@@ -1,5 +1,6 @@
 package com.example.sockettest1;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
 
@@ -43,10 +46,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         int type = messagesList.get(position).getType();
         String read = messagesList.get(position).getRead();
 
-        TextView msgTextView = holder.v.findViewById(R.id.user_msg_item);
-        TextView dateTextView = holder.v.findViewById(R.id.user_date_item);
-        ImageView readImageView = holder.v.findViewById(R.id.user_msg_read);
-        RelativeLayout relativeLayout = holder.v.findViewById(R.id.rl_squircle);
+        TextView msgTextView = holder.itemView.findViewById(R.id.user_msg_item);
+        TextView dateTextView = holder.itemView.findViewById(R.id.user_date_item);
+        ImageView readImageView = holder.itemView.findViewById(R.id.user_msg_read);
+        RelativeLayout relativeLayout = holder.itemView.findViewById(R.id.rl_squircle);
 
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) relativeLayout.getLayoutParams();
 
@@ -56,10 +59,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         //mesaj primit
         if (type == 1) {
+            Log.d(TAG, "onBindViewHolder: intrat in type == 1 pentru mesajul " + message);
             readImageView.setVisibility(View.GONE);
         }
         //mesaj trimis
         else {
+            Log.d(TAG, "onBindViewHolder: intrat in type == 0 pentru mesajul " + message);
             relativeLayout.setBackgroundResource(R.drawable.squircle_sent);
             params.addRule(RelativeLayout.ALIGN_PARENT_END);
             relativeLayout.setLayoutParams(params);

@@ -36,6 +36,10 @@ public class UserMessagesList {
         return expeditor;
     }
 
+    public void setAdapter(MessageAdapter adapter) {
+        this.adapter = adapter;
+    }
+
     public ArrayList<Message> getMessagesList() {
         return messagesList;
     }
@@ -59,11 +63,9 @@ public class UserMessagesList {
         int counter = 0;
         for (Message m : messagesList) {
             if (m.getType() == 1 && m.getRead().equals("N")) {
-                Log.d(TAG, "getUnreadMessages: gasit mesajul necitit:" + m.getMsg());
                 counter++;
             }
         }
-        Log.d(TAG, "getUnreadMessages: intorc un total de " + counter + " mesaje necitite");
         return counter;
     }
 
